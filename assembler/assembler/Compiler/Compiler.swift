@@ -12,6 +12,7 @@ class Compiler {
     
     enum CompilerError : Error {
         case InitalizationError(msg: String)
+        case LinkerError
         case Default
     }
     
@@ -70,17 +71,17 @@ class Compiler {
                     case .binary:
                         let dst = encodeRegister(package.tokens[2])!
                         let src = encodeRegister(package.tokens[1])!
-                        let b = dst & ((src << 4) & 0xf0)
+                        let b = dst | ((src << 4) & 0xf0)
                         ostream.append(byte: b)
-                        byteCount += 2
+                        byteCount += 1
                     
                     case .ternay:
                         let dst = encodeRegister(package.tokens[3])!
                         let srcA = encodeRegister(package.tokens[1])!
                         let srcB = encodeRegister(package.tokens[2])!
-                        let srcByte = srcB & ((srcA << 4) & 0xf0)
+                        let srcByte = srcB | ((srcA << 4) & 0xf0)
                         ostream.append(bytes: [dst, srcByte])
-                        byteCount += 3
+                        byteCount += 2
                     
                     case .unaryAddr:
                         let addr = encodeAddress(package.tokens[1])
@@ -104,32 +105,34 @@ class Compiler {
                         byteCount += 8
                         
                     case .imm64:
-                        let reg = encodeRegister(package.tokens[1])!
-                        let imm = encodeImm(package.tokens[2], as: UInt64.self)
+                        let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
+                        let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt64.self)
                         ostream.append(byte: reg)
                         ostream.append(imm, as: UInt64.self)
                         byteCount += 9
                         
                     case .imm32:
-                        let reg = encodeRegister(package.tokens[1])!
-                        let imm = encodeImm(package.tokens[2], as: UInt32.self)
+                        let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
+                        let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt32.self)
                         ostream.append(byte: reg)
                         ostream.append(imm, as: UInt32.self)
                         byteCount += 5
                         
                     case .imm16:
-                        let reg = encodeRegister(package.tokens[1])!
-                        let imm = encodeImm(package.tokens[2], as: UInt16.self)
+                        let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
+                        let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt16.self)
                         ostream.append(byte: reg)
                         ostream.append(imm, as: UInt16.self)
                         byteCount += 3
                         
                     case .imm8:
-                        let reg = encodeRegister(package.tokens[1])!
-                        let imm = encodeImm(package.tokens[2], as: UInt8.self)
+                        let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
+                        let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt8.self)
                         ostream.append(byte: reg)
                         ostream.append(imm, as: UInt8.self)
                         byteCount += 2
+                        
+                    
                         
                     }
                 }
@@ -156,6 +159,7 @@ class Compiler {
                         if unprocessedLabels[label] != nil {
                             for pos in unprocessedLabels[label]! {
                                 ostream.replace(at: pos, with: UInt64(byteCount))
+                                unprocessedLabels.removeValue(forKey: label)
                             }
                         }
                         
@@ -165,6 +169,7 @@ class Compiler {
                         if unprocessedLabels[label] != nil {
                             for pos in unprocessedLabels[label]! {
                                 ostream.replace(at: pos, with: UInt64(byteCount))
+                                unprocessedLabels.removeValue(forKey: label)
                             }
                         }
                         
@@ -214,6 +219,10 @@ class Compiler {
                 }
             }
             
+            if unprocessedLabels.count != 0 {
+                throw CompilerError.LinkerError
+            }
+            
             ostream.write(to: outfile)
             return 0
         } catch Parser.ParserError.General(let line, let msg, let ec) {
@@ -225,6 +234,15 @@ class Compiler {
         } catch Lexer.CompilerError.InvalidLiteral(let line, let msg) {
             print("Syntax error at \(infile):\(line) - \(msg)")
             return 9
+        } catch CompilerError.LinkerError {
+            print("Linker Error:")
+            for label in unprocessedLabels.keys {
+                print("Undefined symbol: \(label).")
+            }
+            return 10
+        } catch Parser.ParserError.InvalidOperand(let line, let actual, let expected) {
+            print("Syntax error at \(infile):\(line) - expected \(expected), found \(actual).")
+            return 11
         } catch {
             print("An unhandled error occured.")
             return -1

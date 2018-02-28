@@ -38,5 +38,10 @@ class SystemCall : VoidInstruction {
             // r0: exit code
             VM.system.killExecution(exitCode: VPU.r0.quad)
         }
+        
+        else if VPU.rx.quad == 0x43 {
+            let x = VM.system.debugStackState(size: VPU.r0.quad)
+            VPU.rx.set(x)
+        }
     }
 }

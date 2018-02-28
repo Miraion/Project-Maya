@@ -10,9 +10,24 @@ import Foundation
 
 class Jmp : BasicUnaryAddrInstruction, UnaryAddrInstruction {
     func run() {
-        let x = SignedQuad(bitPattern: addr)
-        var pc = SignedQuad(bitPattern: VPU.PC)
-        pc += x
-        VPU.PC = Quad(bitPattern: pc)
+//        let x = SignedQuad(bitPattern: addr)
+//        var pc = SignedQuad(bitPattern: VPU.PC)
+//        pc += x
+//        VPU.PC = Quad(bitPattern: pc)
+        VPU.PC = VM.codeAddress + addr
+    }
+}
+
+class ConditionalJump : BasicUnaryAddrInstruction, UnaryAddrInstruction {
+    var condition: () -> Bool
+    
+    init (_ condition: @escaping () -> Bool) {
+        self.condition = condition
+    }
+    
+    func run() {
+        if condition() {
+            VPU.PC = VM.codeAddress + addr
+        }
     }
 }

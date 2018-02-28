@@ -1,0 +1,15 @@
+section text
+global main:
+    la      txt, r1
+    setb    r2, 0xc
+    setb    rx, 1
+    setb    r0, 1
+    syscall
+
+    setb    rx, 7
+    setb    r0, 0
+    syscall
+
+section data
+local txt:
+    string "Hello World\n"

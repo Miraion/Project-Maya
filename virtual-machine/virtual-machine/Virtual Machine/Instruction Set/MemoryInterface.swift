@@ -8,6 +8,36 @@
 
 import Foundation
 
+class Push : BasicUnaryInstruction, UnaryInstruction {
+    func run() throws {
+        if VPU.rs.quad >= (VM.bottomOfCallStackAddr + 8) {
+            VPU.rs.quad -= 8
+            if let ptr = UnsafeMutablePointer<Quad>(bitPattern: UInt(VPU.rs.quad)) {
+                ptr.pointee = src.quad
+            } else {
+                throw VirtualMachine.RuntimeError.SegmentationFault
+            }
+        } else {
+            throw VirtualMachine.RuntimeError.StackOverflow
+        }
+    }
+}
+
+class Pop : BasicUnaryInstruction, UnaryInstruction {
+    func run() throws {
+        if VPU.rs.quad <= (VM.initialStackPointer - 8) {
+            if let ptr = UnsafePointer<Quad>(bitPattern: UInt(VPU.rs.quad)) {
+                src.quad = ptr.pointee
+                VPU.rs.quad += 8
+            } else {
+                throw VirtualMachine.RuntimeError.SegmentationFault
+            }
+        } else {
+            throw VirtualMachine.RuntimeError.SegmentationFault
+        }
+    }
+}
+
 class LoadFromImmediate<T: FixedWidthInteger> : BasicBinaryAddrInstruction, BinaryAddrInstruction {
     func run() throws {
         addr += VM.codeAddress

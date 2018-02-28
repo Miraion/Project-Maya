@@ -27,3 +27,9 @@ class Set<T: FixedWidthInteger> : ImmediateInstruction {
     }
     
 }
+
+class Zero : BasicUnaryInstruction, UnaryInstruction {
+    func run() {
+        src.zero()
+    }
+}

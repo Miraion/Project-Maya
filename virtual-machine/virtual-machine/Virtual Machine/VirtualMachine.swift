@@ -18,6 +18,7 @@ class VirtualMachine {
         case InvalidOpcode(opc: Byte)
         case SegmentationFault
         case FileError(filename: String)
+        case StackOverflow
     }
 
     let vpu = VirtualProcessingUnit()
@@ -29,6 +30,10 @@ class VirtualMachine {
         return codeAddress - 1
     }
     
+    var initialStackPointer: Quad {
+        return stackAddress + 1
+    }
+    
     var bottomOfCallStackAddr: Quad {
         return Quad(UInt(bitPattern: memorySpace))
     }
@@ -38,9 +43,9 @@ class VirtualMachine {
     var continueExecution = true
     var exitCode = 0
     
-    var endOfMemorySpace: Quad {
-        return stackAddress + memorySpaceSize
-    }
+//    var endOfMemorySpace: Quad {
+//        return stackAddress + memorySpaceSize
+//    }
     
     let memorySpaceSize: Quad = 0x4000  // 16 killobytes
     
@@ -73,13 +78,14 @@ class VirtualMachine {
         codeAddress = Quad(UInt(bitPattern: codeSectionStart))
         
         // Initalize registers
-        VPU.rb.quad = codeAddress  // rb gets the starting address for the code
+        VPU.rb.quad = stackAddress
         VPU.PC = codeAddress
-        VPU.rs.quad = stackAddress // rs gets the starting address for the stack
+        VPU.rs.quad = initialStackPointer
         
         // Runtime loop
         while executor.decoder.bytesLeft != 0 && continueExecution {
             if VPU.PC < codeAddress {
+                print("PC is too low.")
                 throw RuntimeError.SegmentationFault
             }
             
@@ -98,12 +104,14 @@ class VirtualMachine {
             }
             
             if VPU.PC > codeAddress + Quad(UInt(fileSize)) + 1 {
+                print("PC is too high.")
                 throw RuntimeError.SegmentationFault
             }
         }
         
         // Clean up, rb and rs must have their original values when the program ends.
-        if VPU.rb.quad != codeAddress || VPU.rs.quad != stackAddress {
+        if VPU.rb.quad != stackAddress || VPU.rs.quad != initialStackPointer {
+            print("Invalid values for rs or rb.")
             throw RuntimeError.SegmentationFault
         }
         

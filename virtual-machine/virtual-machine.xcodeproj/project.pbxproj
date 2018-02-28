@@ -26,6 +26,7 @@
 		3FC7954E20414CD400F55E74 /* InstructionFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953B20414CD400F55E74 /* InstructionFormat.swift */; };
 		3FC7954F20414CD400F55E74 /* Set.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953C20414CD400F55E74 /* Set.swift */; };
 		3FC7955020414CD400F55E74 /* BoolExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953E20414CD400F55E74 /* BoolExtension.swift */; };
+		3FC795522042016800F55E74 /* Comparison.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC795512042016800F55E74 /* Comparison.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -61,6 +62,7 @@
 		3FC7953B20414CD400F55E74 /* InstructionFormat.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstructionFormat.swift; sourceTree = "<group>"; };
 		3FC7953C20414CD400F55E74 /* Set.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Set.swift; sourceTree = "<group>"; };
 		3FC7953E20414CD400F55E74 /* BoolExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoolExtension.swift; sourceTree = "<group>"; };
+		3FC795512042016800F55E74 /* Comparison.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comparison.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,6 +138,7 @@
 				3FC7953A20414CD400F55E74 /* Mov.swift */,
 				3FC7953B20414CD400F55E74 /* InstructionFormat.swift */,
 				3FC7953C20414CD400F55E74 /* Set.swift */,
+				3FC795512042016800F55E74 /* Comparison.swift */,
 			);
 			path = "Instruction Set";
 			sourceTree = "<group>";
@@ -212,6 +215,7 @@
 				3FC7954220414CD400F55E74 /* VirtualProcessingUnit.swift in Sources */,
 				3FC7953F20414CD400F55E74 /* VirtualCore.swift in Sources */,
 				3FC7954520414CD400F55E74 /* VirtualMachine.swift in Sources */,
+				3FC795522042016800F55E74 /* Comparison.swift in Sources */,
 				3FC7954D20414CD400F55E74 /* Mov.swift in Sources */,
 				3FC7954420414CD400F55E74 /* Executer.swift in Sources */,
 				3FC7954F20414CD400F55E74 /* Set.swift in Sources */,

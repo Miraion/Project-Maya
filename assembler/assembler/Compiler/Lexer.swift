@@ -92,6 +92,14 @@ class Lexer {
     private func constructToken() throws -> BasicToken? {
         if istream.peek() != nil {
             
+            while isCommentMarker(istream.peek()) || isWhiteSpace(istream.peek()) {
+                if isCommentMarker(istream.peek()) {
+                    removeComment()
+                } else {
+                    removeTailingWhiteSpace()
+                }
+            }
+            
             var strBuilder = [UInt8]()
             var isConstructingStringLiteral = false
             var isEscaped = false
@@ -103,6 +111,10 @@ class Lexer {
                 } else if char == 0x22 && !isEscaped {
                     isConstructingStringLiteral = !isConstructingStringLiteral
                 } else if isWhiteSpace(char) && !isConstructingStringLiteral {
+                    removeTailingWhiteSpace()
+                    break
+                } else if isCommentMarker(char) && !isConstructingStringLiteral {
+                    removeComment()
                     removeTailingWhiteSpace()
                     break
                 }
@@ -189,6 +201,16 @@ class Lexer {
     
     private func removeTailingWhiteSpace() {
         while isWhiteSpace(istream.peek()) {
+            istream.extract()
+        }
+    }
+    
+    private func isCommentMarker(_ c: UInt8?) -> Bool {
+        return c == 0x23 || c == 0x3b
+    }
+    
+    private func removeComment() {
+        while istream.peek() != 10 {
             istream.extract()
         }
     }

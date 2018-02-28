@@ -91,13 +91,13 @@
 			isa = PBXGroup;
 			children = (
 				3FC7950620414BBE00F55E74 /* Lexer.swift */,
+				3FC7950D20414BBE00F55E74 /* Parser.swift */,
+				3FC7950A20414BBE00F55E74 /* Compiler.swift */,
 				3FC7950720414BBE00F55E74 /* KeywordMap.swift */,
 				3FC7950820414BBE00F55E74 /* BinaryStream.swift */,
 				3FC7950920414BBE00F55E74 /* InstructionMap.swift */,
-				3FC7950A20414BBE00F55E74 /* Compiler.swift */,
 				3FC7950B20414BBE00F55E74 /* InputStream.swift */,
 				3FC7950C20414BBE00F55E74 /* TokenExtractionFormat.swift */,
-				3FC7950D20414BBE00F55E74 /* Parser.swift */,
 			);
 			path = Compiler;
 			sourceTree = "<group>";

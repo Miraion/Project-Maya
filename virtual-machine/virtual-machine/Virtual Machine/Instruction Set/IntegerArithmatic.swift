@@ -62,3 +62,45 @@ class Dec : BasicUnaryInstruction, UnaryInstruction {
         VPU.OF = x.overflow
     }
 }
+
+class ImmAdd<I: FixedWidthInteger> : ImmediateInstruction {
+    var reg = VirtualRegister()
+    var extractor: FileDecoder? = nil
+    
+    func setup(reg: VirtualRegister, extractor: FileDecoder) {
+        self.reg = reg
+        self.extractor = extractor
+    }
+    
+    func run() throws {
+        if let x = extractor!.extract(as: I.self) {
+            let y = reg.get(as: I.self)
+            let z = x.addingReportingOverflow(y)
+            reg.set(z.partialValue)
+            VPU.OF = z.overflow
+        } else {
+            throw VirtualMachine.RuntimeError.SegmentationFault
+        }
+    }
+}
+
+class ImmSub<I: FixedWidthInteger> : ImmediateInstruction {
+    var reg = VirtualRegister()
+    var extractor: FileDecoder? = nil
+    
+    func setup(reg: VirtualRegister, extractor: FileDecoder) {
+        self.reg = reg
+        self.extractor = extractor
+    }
+    
+    func run() throws {
+        if let x = extractor!.extract(as: I.self) {
+            let y = reg.get(as: I.self)
+            let z = y.subtractingReportingOverflow(x)
+            reg.set(z.partialValue)
+            VPU.OF = z.overflow
+        } else {
+            throw VirtualMachine.RuntimeError.SegmentationFault
+        }
+    }
+}

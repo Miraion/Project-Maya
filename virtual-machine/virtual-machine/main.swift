@@ -19,6 +19,7 @@ VM.debugMode = false
 do {
     let exitCode = try VM.execute(file: filename)
 //    VPU.printDec()
+//    VPU.printHex()
     exit(Int32(exitCode))
     
 } catch VirtualMachine.RuntimeError.UnableToOpenFile {
