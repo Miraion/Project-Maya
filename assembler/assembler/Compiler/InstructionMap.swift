@@ -8,16 +8,22 @@
 
 import Foundation
 
+/// Enumeration of all valid encoding formats.
 enum EncodingType {
     case void
     case unary;     case binary;    case ternay
     case unaryAddr; case binaryAddrFirst; case binaryAddrLast
     case imm64;     case imm32;     case imm16;     case imm8
-//    case immFirst64;     case immFirst32;     case immFirst16;     case immFirst8
 }
 
+/// Map of instruction syntax definitions to 8-bit opcode, token extraction format, and encoding format.
 fileprivate(set) var instructionMap = [String : (opc: UInt8, extractionFormat: TokenExtractionFormat, encodingFormat: EncodingType)]()
 
+/**
+ Initializes the global `instructionMap` variable.
+ 
+ - warning: This function may only be called once per program execution.
+ */
 func initInstructionMap() {
     
     instructionMap["add"] = (0x10, TokenExtractionFormat(.register, .register, .register), .ternay)

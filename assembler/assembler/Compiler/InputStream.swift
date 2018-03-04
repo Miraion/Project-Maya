@@ -10,7 +10,7 @@ import Foundation
 
 class InputStream {
     
-    private let filename: String
+    let filename: String
     private let contents: [UInt8]
     private var index = 0
     private(set) var lineNum = 0

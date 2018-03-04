@@ -1,0 +1,7 @@
+section text
+    jmp B
+local A:
+    jmp B
+    syscall
+local B:
+    jmp A

@@ -10,6 +10,8 @@ import Foundation
 
 fileprivate(set) var keywordMap = [String : TokenExtractionFormat]()
 
+
+/// Enumeration of all valid keywords and their syntatic definitions.
 enum Keywords : String {
     case section = "section"
     case global = "global"
@@ -21,6 +23,7 @@ enum Keywords : String {
     case string = "string"
 }
 
+/// Map of keyword syntax definitions to their extraction format.
 func initKeywordMap() {
     keywordMap[Keywords.section.rawValue]   = TokenExtractionFormat(.keyword)
     keywordMap[Keywords.global.rawValue]    = TokenExtractionFormat(.label)

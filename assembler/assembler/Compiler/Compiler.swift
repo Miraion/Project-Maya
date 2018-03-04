@@ -8,248 +8,283 @@
 
 import Foundation
 
+/**
+ Delegate responsable for compiling source files into binary.
+ 
+ Contains an internal `Lexer` and `Parser` delegate which are responsable for parsing the souce file
+ and prefoming preliminary syntax checking.
+ */
 class Compiler {
     
-    enum CompilerError : Error {
-        case InitalizationError(msg: String)
-        case LinkerError
-        case Default
-    }
-    
-    enum CompilerMode : String {
+    private enum CompilerMode : String {
         case text = "text"
         case data = "data"
         case null = "null"
     }
-    
-    private let infile: String
-    private let istream: InputStream
-    private let lexer: Lexer
-    private let parser: Parser
-    private let ostream: BinaryStream
     
     private var byteCount: Int = 0
     private var labelMap = [String : (bytePos: Int, isGlobal: Bool)]()
     private var unprocessedLabels = [String : [Int]]()
     private var mode: CompilerMode = .null
     
-    init? (file: String) throws {
-        self.infile = file
-        if let i = InputStream(file: file) {
-            self.istream = i
-        } else {
-            return nil
-        }
-        self.lexer = try Lexer(stream: istream)
-        self.parser = Parser(lexer: lexer)
-        self.ostream = BinaryStream()
-    }
     
-    /// Attempts to compile the input file into machine code and store it in a file with a given name.
-    /// Returns the exit value for the program. A return value of 0 means a successful compilation.
-    func compile(into outfile: String) -> Int {
-        do {
-            while let package = try parser.extract() {
+    /**
+     Attempts to compile a source file with a given path into a binary object file.
+     
+     This method wraps around the lexing and parsing subsystems of the assembler, providing a simple
+     way to compile a single source file.
+     
+     - invariant:
+        Internal state is reset at the begining of each call meaning that it is safe to call this
+        method on multiple files repeatedly with no side-effects.
+     
+     - parameter file: The path of the source file to be compiled.
+     
+     - returns: An `ObjectFile` object consisting of a compiled binary along with relavent metadata.
+     
+     - throws:
+        Multiple types of errors depending on where the error originated. Errors from the `Parser`,
+        `Lexer`, and `InputStream` classes propagate through this method.
+     
+     */
+    func compile(file: String) throws -> ObjectFile {
+        let filename = file
+        guard let istream = InputStream(file: filename) else {
+            throw AssemblerError.Default(msg: "Unable to open input stream from \"\(filename)\".")
+        }
+        let lexer = try Lexer(stream: istream)
+        let parser = Parser(lexer: lexer)
+        let ostream = BinaryStream()
+        
+        byteCount = 0
+        labelMap.removeAll()
+        unprocessedLabels.removeAll()
+        mode = .null
+        
+        // Continue extracting packages from the parser until there are none left, or an error occurs.
+        while let package = try parser.extract() {
+            
+            // Package will either start with an instruction or a keyword.
+            
+            // Handle packages that start with an instruction.
+            if package.tokens.first?.type == .instruction {
                 
-                if package.tokens.first?.type == .instruction {
+                // Expand the package, retrieving the relevent instruction data from the global instruction
+                // map. It is safe to unwrap these optionals because the parser has already checked if the
+                // instruction and its operands are valid.
+                let text = (package.tokens.first! as! Lexer.WordToken).text
+                let tokenData = instructionMap[text]!
+                let opcode = tokenData.opc
+                let encodeFormat = tokenData.encodingFormat
+                
+                // Write out the opcode.
+                ostream.append(byte: opcode)
+                byteCount += 1
+                
+                // Write out the operands.
+                switch (encodeFormat) {
+                // No operands for a void type instruction.
+                case .void: continue
                     
-                    let text = (package.tokens.first! as! Lexer.WordToken).text
-                    let tokenData = instructionMap[text]!
-                    let opcode = tokenData.opc
-                    let encodeFormat = tokenData.encodingFormat
-                    
-                    ostream.append(byte: opcode)
+                // Write out a single register.
+                case .unary:
+                    ostream.append(byte: encodeRegister(package.tokens[1])!)
                     byteCount += 1
                     
-                    switch (encodeFormat) {
-                    case .void: continue
-                        
-                    case .unary:
-                        ostream.append(byte: encodeRegister(package.tokens[1])!)
-                        byteCount += 1
-                        
-                    case .binary:
-                        let dst = encodeRegister(package.tokens[2])!
-                        let src = encodeRegister(package.tokens[1])!
-                        let b = dst | ((src << 4) & 0xf0)
-                        ostream.append(byte: b)
-                        byteCount += 1
+                // Write out 2 registers, combining them into a single byte.
+                case .binary:
+                    let dst = encodeRegister(package.tokens[2])!
+                    let src = encodeRegister(package.tokens[1])!
+                    let b = dst | ((src << 4) & 0xf0)
+                    ostream.append(byte: b)
+                    byteCount += 1
+                
+                // Write out 3 registers.
+                case .ternay:
+                    let dst = encodeRegister(package.tokens[3])!
+                    let srcA = encodeRegister(package.tokens[1])!
+                    let srcB = encodeRegister(package.tokens[2])!
+                    let srcByte = srcB | ((srcA << 4) & 0xf0)
+                    ostream.append(bytes: [dst, srcByte])
+                    byteCount += 2
+                
+                // Write out a 64-bit address.
+                case .unaryAddr:
+                    let addr = encodeAddress(package.tokens[1])
+                    ostream.append(addr, as: UInt64.self)
+                    byteCount += 8
                     
-                    case .ternay:
-                        let dst = encodeRegister(package.tokens[3])!
-                        let srcA = encodeRegister(package.tokens[1])!
-                        let srcB = encodeRegister(package.tokens[2])!
-                        let srcByte = srcB | ((srcA << 4) & 0xf0)
-                        ostream.append(bytes: [dst, srcByte])
-                        byteCount += 2
+                // Write out a register and a 64-bit address.
+                case .binaryAddrFirst:
+                    let reg = encodeRegister(package.tokens[2])!
+                    byteCount += 1
+                    let addr = encodeAddress(package.tokens[1])
+                    ostream.append(byte: reg)
+                    ostream.append(addr, as: UInt64.self)
+                    byteCount += 8
                     
-                    case .unaryAddr:
-                        let addr = encodeAddress(package.tokens[1])
-                        ostream.append(addr, as: UInt64.self)
-                        byteCount += 8
-                        
-                    case .binaryAddrFirst:
-                        let reg = encodeRegister(package.tokens[2])!
-                        byteCount += 1
-                        let addr = encodeAddress(package.tokens[1])
-                        ostream.append(byte: reg)
-                        ostream.append(addr, as: UInt64.self)
-                        byteCount += 8
-                        
-                    case .binaryAddrLast:
-                        let reg = encodeRegister(package.tokens[1])!
-                        byteCount += 1
-                        let addr = encodeAddress(package.tokens[2])
-                        ostream.append(byte: reg)
-                        ostream.append(addr, as: UInt64.self)
-                        byteCount += 8
-                        
-                    case .imm64:
-                        let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
-                        let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt64.self)
-                        ostream.append(byte: reg)
-                        ostream.append(imm, as: UInt64.self)
-                        byteCount += 9
-                        
-                    case .imm32:
-                        let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
-                        let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt32.self)
-                        ostream.append(byte: reg)
-                        ostream.append(imm, as: UInt32.self)
-                        byteCount += 5
-                        
-                    case .imm16:
-                        let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
-                        let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt16.self)
-                        ostream.append(byte: reg)
-                        ostream.append(imm, as: UInt16.self)
-                        byteCount += 3
-                        
-                    case .imm8:
-                        let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
-                        let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt8.self)
-                        ostream.append(byte: reg)
-                        ostream.append(imm, as: UInt8.self)
-                        byteCount += 2
-                        
+                // Same write-out format as the above case, but the operands are in different locations
+                // within the package.
+                case .binaryAddrLast:
+                    let reg = encodeRegister(package.tokens[1])!
+                    byteCount += 1
+                    let addr = encodeAddress(package.tokens[2])
+                    ostream.append(byte: reg)
+                    ostream.append(addr, as: UInt64.self)
+                    byteCount += 8
                     
-                        
-                    }
+                // Write out a register and a literal of a given size.
+                // Here there is no fixed location for each operand in the package so we extract them
+                // based on their type. The write-out format is the same none the less.
+                    
+                case .imm64:
+                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
+                    let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt64.self)
+                    ostream.append(byte: reg)
+                    ostream.append(imm, as: UInt64.self)
+                    byteCount += 9
+                    
+                case .imm32:
+                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
+                    let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt32.self)
+                    ostream.append(byte: reg)
+                    ostream.append(imm, as: UInt32.self)
+                    byteCount += 5
+                    
+                case .imm16:
+                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
+                    let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt16.self)
+                    ostream.append(byte: reg)
+                    ostream.append(imm, as: UInt16.self)
+                    byteCount += 3
+                    
+                case .imm8:
+                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
+                    let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt8.self)
+                    ostream.append(byte: reg)
+                    ostream.append(imm, as: UInt8.self)
+                    byteCount += 2
+                } // switch (encode format)
+                
+            } // if package.tokens.first?.type == .instruction
+            
+            // Handle packages that start with a keyword.
+            else if package.tokens.first?.type == .keyword {
+                
+                let text = (package.tokens.first! as! Lexer.WordToken).text
+                // Ensure that the keyword is actually a 'keyword' and not a label or something else.
+                // This is done by attempting to create a `Keyword` object from the token text.
+                guard let keyword = Keywords(rawValue: text) else {
+                    throw AssemblerError.ParserError(file: filename, line: parser.lineNum, msg: "Unexpected keyword \"\(text)\"")
                 }
                 
-                else if package.tokens.first?.type == .keyword {
-                    
-                    let text = (package.tokens.first! as! Lexer.WordToken).text
-                    guard let keyword = Keywords(rawValue: text) else {
-                        throw Parser.ParserError.General(line: parser.lineNum, msg: "Unexpected keyword \"\(text)\"", exitcode: 36)
+                // Handle each keyword as a separate case.
+                switch (keyword) {
+                // Switchs the compiler mode.
+                case .section:
+                    let sectionType = package.tokens[1] as! Lexer.WordToken
+                    if let type = CompilerMode(rawValue: sectionType.text) {
+                        mode = type
+                    } else {
+                        throw AssemblerError.ParserError(file: filename, line: parser.lineNum, msg: "Invalid section type \"\(sectionType.text)\"")
+                    }
+                
+                // Declares a global label.
+                case .global:
+                    let label = String((package.tokens[1] as! Lexer.WordToken).text.dropLast())
+                    labelMap[label] = (byteCount, true)
+                    if unprocessedLabels[label] != nil {
+                        for pos in unprocessedLabels[label]! {
+                            ostream.replace(at: pos, with: UInt64(bitPattern: Int64(byteCount) - Int64(pos) - 8))
+                            unprocessedLabels.removeValue(forKey: label)
+                        }
                     }
                     
-                    switch (keyword) {
-                    case .section:
-                        let sectionType = package.tokens[1] as! Lexer.WordToken
-                        if let type = CompilerMode(rawValue: sectionType.text) {
-                            mode = type
-                        } else {
-                            throw Parser.ParserError.General(line: parser.lineNum, msg: "Invalid section type \"\(sectionType.text)\"", exitcode: 35)
+                // Declares a local label.
+                case .local:
+                    let label = String((package.tokens[1] as! Lexer.WordToken).text.dropLast())
+                    labelMap[label] = (byteCount, false)
+                    if unprocessedLabels[label] != nil {
+                        for pos in unprocessedLabels[label]! {
+                            ostream.replace(at: pos, with: UInt64(bitPattern: Int64(byteCount) - Int64(pos) - 8))
+                            unprocessedLabels.removeValue(forKey: label)
                         }
-                        
-                    case .global:
-                        let label = String((package.tokens[1] as! Lexer.WordToken).text.dropLast())
-                        labelMap[label] = (byteCount, true)
-                        if unprocessedLabels[label] != nil {
-                            for pos in unprocessedLabels[label]! {
-                                ostream.replace(at: pos, with: UInt64(byteCount))
-                                unprocessedLabels.removeValue(forKey: label)
-                            }
-                        }
-                        
-                    case .local:
-                        let label = String((package.tokens[1] as! Lexer.WordToken).text.dropLast())
-                        labelMap[label] = (byteCount, false)
-                        if unprocessedLabels[label] != nil {
-                            for pos in unprocessedLabels[label]! {
-                                ostream.replace(at: pos, with: UInt64(byteCount))
-                                unprocessedLabels.removeValue(forKey: label)
-                            }
-                        }
-                        
-                    case .byte:
-                        if mode != .data {
-                            throw Parser.ParserError.General(line: parser.lineNum, msg: "'byte' keyword is only allowed in the 'data' section.", exitcode: 39)
-                        }
-                        let literal = UInt8((package.tokens[1] as! Lexer.ImmToken).value)
-                        ostream.append(byte: literal)
-                        byteCount += 1
-                        
-                    case .word:
-                        if mode != .data {
-                            throw Parser.ParserError.General(line: parser.lineNum, msg: "'word' keyword is only allowed in the 'data' section.", exitcode: 39)
-                        }
-                        let literal = UInt16((package.tokens[1] as! Lexer.ImmToken).value)
-                        ostream.append(literal, as: UInt16.self)
-                        byteCount += 2
-                        
-                    case .long:
-                        if mode != .data {
-                            throw Parser.ParserError.General(line: parser.lineNum, msg: "'long' keyword is only allowed in the 'data' section.", exitcode: 39)
-                        }
-                        let literal = UInt32((package.tokens[1] as! Lexer.ImmToken).value)
-                        ostream.append(literal, as: UInt32.self)
-                        byteCount += 4
-                        
-                    case .quad:
-                        if mode != .data {
-                            throw Parser.ParserError.General(line: parser.lineNum, msg: "'quad' keyword is only allowed in the 'data' section.", exitcode: 39)
-                        }
-                        let literal = UInt64((package.tokens[1] as! Lexer.ImmToken).value)
-                        ostream.append(literal, as: UInt64.self)
-                        byteCount += 8
-                        
-                    case .string:
-                        if mode != .data {
-                            throw Parser.ParserError.General(line: parser.lineNum, msg: "'string' keyword is only allowed in the 'data' section.", exitcode: 39)
-                        }
-                        let literal = (package.tokens[1] as! Lexer.StringLiteralToken).bytes
-                        ostream.append(bytes: literal)
-                        byteCount += literal.count
-                        
                     }
-                } else {
-                    throw CompilerError.Default
+                    
+                // Data keywords (may only be used when compiler mode is set to `data`).
+                case .byte:
+                    if mode != .data {
+                        throw AssemblerError.ParserError(file: filename, line: parser.lineNum,
+                                                         msg: "'byte' keyword is only allowed in the 'data' section.")
+                    }
+                    let literal = UInt8((package.tokens[1] as! Lexer.ImmToken).value)
+                    ostream.append(byte: literal)
+                    byteCount += 1
+                    
+                case .word:
+                    if mode != .data {
+                        throw AssemblerError.ParserError(file: filename, line: parser.lineNum,
+                                                         msg: "'word' keyword is only allowed in the 'data' section.")
+                    }
+                    let literal = UInt16((package.tokens[1] as! Lexer.ImmToken).value)
+                    ostream.append(literal, as: UInt16.self)
+                    byteCount += 2
+                    
+                case .long:
+                    if mode != .data {
+                        throw AssemblerError.ParserError(file: filename, line: parser.lineNum,
+                                                         msg: "'long' keyword is only allowed in the 'data' section.")
+                    }
+                    let literal = UInt32((package.tokens[1] as! Lexer.ImmToken).value)
+                    ostream.append(literal, as: UInt32.self)
+                    byteCount += 4
+                    
+                case .quad:
+                    if mode != .data {
+                        throw AssemblerError.ParserError(file: filename, line: parser.lineNum,
+                                                         msg: "'quad' keyword is only allowed in the 'data' section.")
+                    }
+                    let literal = UInt64((package.tokens[1] as! Lexer.ImmToken).value)
+                    ostream.append(literal, as: UInt64.self)
+                    byteCount += 8
+                    
+                case .string:
+                    if mode != .data {
+                        throw AssemblerError.ParserError(file: filename, line: parser.lineNum,
+                                                         msg: "'string' keyword is only allowed in the 'data' section.")
+                    }
+                    let literal = (package.tokens[1] as! Lexer.StringLiteralToken).bytes
+                    ostream.append(bytes: literal)
+                    byteCount += literal.count
+                    
                 }
-            }
+            } // if package.tokens.first?.type == .keyword
             
-            if unprocessedLabels.count != 0 {
-                throw CompilerError.LinkerError
+            // If package neither starts with an instruction or keyword then throw an error.
+            // The parser will probably throw an error before this point if it can't create
+            // a valid package, but, for the sake of redundancy, we'll throw another error
+            // here just incase something slips through.
+            else {
+                throw AssemblerError.Default(msg: "Invalid token.")
             }
-            
-            ostream.write(to: outfile)
-            return 0
-        } catch Parser.ParserError.General(let line, let msg, let ec) {
-            print("Syntax error at \(infile):\(line) - \(msg).")
-            return ec
-        } catch Lexer.CompilerError.LexicalError(let line, let msg) {
-            print("Sytax error at \(infile):\(line) - \(msg)")
-            return 8
-        } catch Lexer.CompilerError.InvalidLiteral(let line, let msg) {
-            print("Syntax error at \(infile):\(line) - \(msg)")
-            return 9
-        } catch CompilerError.LinkerError {
-            print("Linker Error:")
-            for label in unprocessedLabels.keys {
-                print("Undefined symbol: \(label).")
+        } // while let package = try parser.extract()
+        
+        // Create the `ObjectFile` along with its metadata.
+        let objFile = ObjectFile()
+        objFile.binary = ostream
+        for label in labelMap {
+            if label.value.isGlobal {
+                objFile.globalLabelMap[label.key] = label.value.bytePos
             }
-            return 10
-        } catch Parser.ParserError.InvalidOperand(let line, let actual, let expected) {
-            print("Syntax error at \(infile):\(line) - expected \(expected), found \(actual).")
-            return 11
-        } catch {
-            print("An unhandled error occured.")
-            return -1
         }
-    }
+        objFile.unprocessedLabelMap = unprocessedLabels
+        return objFile
+        
+    } // func compile() throws -> ObjectFile
     
-    func encodeRegister(_ token: BasicToken) -> UInt8? {
+    
+    /// Encodes a register from a token with type `.register`.
+    private func encodeRegister(_ token: BasicToken) -> UInt8? {
         if let t = token as? Lexer.WordToken {
             return encodeRegister(t.text)
         } else {
@@ -257,7 +292,9 @@ class Compiler {
         }
     }
     
-    func encodeRegister(_ text: String) -> UInt8? {
+    
+    /// Encodes a register from a string.
+    private func encodeRegister(_ text: String) -> UInt8? {
         switch (text) {
         case "r0": return 0x0
         case "r1": return 0x1
@@ -279,11 +316,26 @@ class Compiler {
         }
     }
     
-    func encodeAddress(_ token: BasicToken) -> UInt64 {
+    
+    /**
+     Encodes a 64-bit address from a label token.
+     
+     Trys to find the address of the label in the label map. If it is sucessful, the
+     relative distance (i.e. the value that must be added to the PC to jump to the label
+     is returned). If it is unable to locate the label, the label and the position where
+     it is referenceed is added to the unprocessed labels map to be filled in later.
+     
+     - returns:
+        The relative distance to the desired label if said label has already been defined
+        in the current contex. Otherwise returns 0 and marks the location to be filled in
+        either once the label appears in the current contex or by the linker.
+     
+     */
+    private func encodeAddress(_ token: BasicToken) -> UInt64 {
         let t = token as! Lexer.WordToken
         let label = t.text
         if let bytePos = labelMap[label]?.bytePos {
-            return UInt64(bytePos)
+            return UInt64(bitPattern: Int64(bytePos) - Int64(byteCount) - 8)
         } else {
             if unprocessedLabels[t.text] != nil {
                 unprocessedLabels[t.text]!.append(byteCount)
@@ -294,6 +346,8 @@ class Compiler {
         }
     }
     
+    
+    /// Encodes an integer value of a given size, truncating if needed.
     func encodeImm<T: FixedWidthInteger>(_ token: BasicToken, as: T.Type) -> T {
         let t = token as! Lexer.ImmToken
         return T(truncatingIfNeeded: t.value)

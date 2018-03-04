@@ -14,7 +14,14 @@ class Call : BasicUnaryAddrInstruction, UnaryAddrInstruction {
             VPU.rs.quad -= 8
             if let ptr = UnsafeMutablePointer<Quad>(bitPattern: UInt(VPU.rs.quad)) {
                 ptr.pointee = VPU.PC  // push program counter
-                VPU.PC = VM.codeAddress + addr  // jump to label
+                
+                // jump to label
+                let x = SignedQuad(bitPattern: addr)
+                var pc = SignedQuad(bitPattern: VPU.PC)
+                pc += x
+                VPU.PC = Quad(bitPattern: pc)
+                
+//                VPU.PC = VM.codeAddress + addr  // jump to label
             } else {
                 throw VirtualMachine.RuntimeError.SegmentationFault
             }

@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3F0A373B204B9C590025BA17 /* Misc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F0A373A204B9C590025BA17 /* Misc.swift */; };
+		3F104B9C204794E30006CC7B /* Linker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F104B9B204794E30006CC7B /* Linker.swift */; };
+		3F104B9E204799030006CC7B /* FileTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F104B9D204799030006CC7B /* FileTypes.swift */; };
+		3F104BA12047AEEB0006CC7B /* ObjectFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F104BA02047AEEB0006CC7B /* ObjectFile.swift */; };
+		3F104BA32047E73C0006CC7B /* AssemblerError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F104BA22047E73C0006CC7B /* AssemblerError.swift */; };
+		3F4FE6E7204B66FF00318121 /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4FE6E6204B66FF00318121 /* Token.swift */; };
 		3FC794FE20414B8700F55E74 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC794FD20414B8700F55E74 /* main.swift */; };
 		3FC7950E20414BBE00F55E74 /* Lexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7950620414BBE00F55E74 /* Lexer.swift */; };
 		3FC7950F20414BBE00F55E74 /* KeywordMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7950720414BBE00F55E74 /* KeywordMap.swift */; };
@@ -31,6 +37,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3F0A373A204B9C590025BA17 /* Misc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Misc.swift; sourceTree = "<group>"; };
+		3F104B9B204794E30006CC7B /* Linker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Linker.swift; sourceTree = "<group>"; };
+		3F104B9D204799030006CC7B /* FileTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTypes.swift; sourceTree = "<group>"; };
+		3F104BA02047AEEB0006CC7B /* ObjectFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectFile.swift; sourceTree = "<group>"; };
+		3F104BA22047E73C0006CC7B /* AssemblerError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssemblerError.swift; sourceTree = "<group>"; };
+		3F4FE6E6204B66FF00318121 /* Token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
 		3FC794FA20414B8700F55E74 /* assembler */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = assembler; sourceTree = BUILT_PRODUCTS_DIR; };
 		3FC794FD20414B8700F55E74 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		3FC7950620414BBE00F55E74 /* Lexer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Lexer.swift; sourceTree = "<group>"; };
@@ -54,6 +66,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3F104B9F2047AED00006CC7B /* FileTypes */ = {
+			isa = PBXGroup;
+			children = (
+				3F104B9D204799030006CC7B /* FileTypes.swift */,
+				3F104BA02047AEEB0006CC7B /* ObjectFile.swift */,
+			);
+			path = FileTypes;
+			sourceTree = "<group>";
+		};
 		3FC794F120414B8700F55E74 = {
 			isa = PBXGroup;
 			children = (
@@ -73,9 +94,12 @@
 		3FC794FC20414B8700F55E74 /* assembler */ = {
 			isa = PBXGroup;
 			children = (
+				3F104B9F2047AED00006CC7B /* FileTypes */,
 				3FC7950520414BBE00F55E74 /* Compiler */,
 				3FC7950420414BBE00F55E74 /* Decompiler */,
 				3FC794FD20414B8700F55E74 /* main.swift */,
+				3F104BA22047E73C0006CC7B /* AssemblerError.swift */,
+				3F0A373A204B9C590025BA17 /* Misc.swift */,
 			);
 			path = assembler;
 			sourceTree = "<group>";
@@ -93,11 +117,13 @@
 				3FC7950620414BBE00F55E74 /* Lexer.swift */,
 				3FC7950D20414BBE00F55E74 /* Parser.swift */,
 				3FC7950A20414BBE00F55E74 /* Compiler.swift */,
+				3F104B9B204794E30006CC7B /* Linker.swift */,
 				3FC7950720414BBE00F55E74 /* KeywordMap.swift */,
 				3FC7950820414BBE00F55E74 /* BinaryStream.swift */,
 				3FC7950920414BBE00F55E74 /* InstructionMap.swift */,
 				3FC7950B20414BBE00F55E74 /* InputStream.swift */,
 				3FC7950C20414BBE00F55E74 /* TokenExtractionFormat.swift */,
+				3F4FE6E6204B66FF00318121 /* Token.swift */,
 			);
 			path = Compiler;
 			sourceTree = "<group>";
@@ -161,13 +187,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				3FC7950F20414BBE00F55E74 /* KeywordMap.swift in Sources */,
+				3F4FE6E7204B66FF00318121 /* Token.swift in Sources */,
+				3F104BA32047E73C0006CC7B /* AssemblerError.swift in Sources */,
+				3F0A373B204B9C590025BA17 /* Misc.swift in Sources */,
 				3FC7951420414BBE00F55E74 /* TokenExtractionFormat.swift in Sources */,
+				3F104B9C204794E30006CC7B /* Linker.swift in Sources */,
 				3FC7950E20414BBE00F55E74 /* Lexer.swift in Sources */,
 				3FC7951320414BBE00F55E74 /* InputStream.swift in Sources */,
 				3FC7951020414BBE00F55E74 /* BinaryStream.swift in Sources */,
 				3FC7951520414BBE00F55E74 /* Parser.swift in Sources */,
+				3F104B9E204799030006CC7B /* FileTypes.swift in Sources */,
 				3FC7951120414BBE00F55E74 /* InstructionMap.swift in Sources */,
 				3FC7951220414BBE00F55E74 /* Compiler.swift in Sources */,
+				3F104BA12047AEEB0006CC7B /* ObjectFile.swift in Sources */,
 				3FC794FE20414B8700F55E74 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -1,0 +1,8 @@
+### Executable Initaliziation File ###
+section text
+# Call the 'main' subroutine.
+    call    main
+# Send exit signal.
+    mov     rx, r0
+    setb    rx, 7
+    syscall

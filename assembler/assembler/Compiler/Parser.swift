@@ -8,15 +8,12 @@
 
 import Foundation
 
+/**
+ Delagate responsable for taking tokens from the lexer and combining them into valid instructions.
+ */
 class Parser {
     
     private let lexer: Lexer
-    
-    enum ParserError : Error {
-        case InvalidOperand(line: Int, actual: Lexer.TokenType, expected: Lexer.TokenType)
-        case General(line: Int, msg: String, exitcode: Int)
-        case UnexpectedEOF
-    }
     
     struct ParsedPackage {
         var tokens = [BasicToken]()
@@ -26,14 +23,29 @@ class Parser {
         self.lexer = lexer
     }
     
+    /// The current line number in the source file being parsed.
     var lineNum: Int {
         return lexer.lineNum
     }
     
-    /// Extracts tokens from the internal lexer and packages them together.
-    /// Returns nil if there are no more tokens in the lexer.
-    ///
-    /// Forwards any errors thrown by the Lexer.
+    /// The name of the source file being parsed.
+    var filename: String {
+        return lexer.filename
+    }
+    
+    
+    /**
+     Extracts tokens from the internal lexer delegate and packages them together.
+     
+     - returns:
+        A package of tokens from the lexer or `nil` if there are no remaining tokens
+        in the lexer.
+     
+     - throws:
+        A myriad of errors regarding invalid syntax along with any errors throw by the
+        lexer while trying to extract tokens.
+     
+     */
     func extract() throws -> ParsedPackage? {
         if let firstToken = try lexer.extract() {
             
@@ -43,18 +55,21 @@ class Parser {
                 var package = ParsedPackage()
                 package.tokens.append(firstToken)
                 guard let tokenData = instructionMap[(firstToken as! Lexer.WordToken).text] else {
-                    throw ParserError.General(line: lineNum, msg: "Invalid Instruction \((firstToken as! Lexer.WordToken).text)", exitcode: 33)
+                    throw AssemblerError.ParserError(file: filename, line: lineNum,
+                                                     msg: "Invalid Instruction \((firstToken as! Lexer.WordToken).text)")
                 }
+                // Extraction format for each instruction is defined in the global `instructionMap` dictionary.
                 let extractionFormat = tokenData.extractionFormat
                 for expectedTokenType in extractionFormat.orderedTypes {
                     if let token = try lexer.extract() {
                         if token.type == expectedTokenType {
                             package.tokens.append(token)
                         } else {
-                            throw ParserError.InvalidOperand(line: lineNum, actual: token.type, expected: expectedTokenType)
+                            throw AssemblerError.InvalidOperand(file: filename, line: lineNum,
+                                                                actual: token.type, expected: expectedTokenType)
                         }
                     } else {
-                        throw ParserError.UnexpectedEOF
+                        throw AssemblerError.UnexpectedEOF(file: filename)
                     }
                 }
                 return package
@@ -66,7 +81,8 @@ class Parser {
             else if firstToken.type == .keyword {
                 var package = ParsedPackage()
                 guard let tokenData = keywordMap[(firstToken as! Lexer.WordToken).text] else {
-                    throw ParserError.General(line: lineNum, msg: "Invalid keyword \"\(firstToken.description)\"", exitcode: 35)
+                    throw AssemblerError.ParserError(file: filename, line: lineNum,
+                                                     msg: "Invalid keyword \"\(firstToken.description)\"")
                 }
                 package.tokens.append(firstToken)
                 let extractionFromat = tokenData.orderedTypes
@@ -75,22 +91,24 @@ class Parser {
                         if token.type == expectedTokenType {
                             package.tokens.append(token)
                         } else {
-                            throw ParserError.InvalidOperand(line: lineNum, actual: token.type, expected: expectedTokenType)
+                            throw AssemblerError.InvalidOperand(file: filename, line: lineNum,
+                                                                actual: token.type, expected: expectedTokenType)
                         }
                     } else {
-                        throw ParserError.UnexpectedEOF
+                        throw AssemblerError.UnexpectedEOF(file: filename)
                     }
                 }
                 return package
             }
             
             else {
-                throw ParserError.General(line: lineNum, msg: "Unexpected token \"\(firstToken.description)\"", exitcode: 34)
+                throw AssemblerError.ParserError(file: filename, line: lineNum,
+                                                 msg: "Unexpected token \"\(firstToken.description)\"")
             }
             
         } else {
             return nil
         }
-    }
+    } // func extract() throws -> ParsedPackage?
     
-}
+} // class Parser

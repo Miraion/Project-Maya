@@ -89,6 +89,8 @@ class VirtualMachine {
                 throw RuntimeError.SegmentationFault
             }
             
+//            print("Byte #: \(VPU.PC - codeAddress) - \(String(format: "%#.02x", executor.decoder.cursor!.pointee))")
+            
             if let opc = executor.decoder.extractByte() {
                 if let instruction = executor.generateInstruction(withOpcode: opc) {
                     try instruction.run()

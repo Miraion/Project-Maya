@@ -1,64 +1,23 @@
 section text
 global main:
-	setb	r4, 26
-	mov		r4, rc
-	setb	r5, 90
+    setb    r4, 26
+    mov     r4, rc
+    setb    r5, 90
 local L0:
-	dec 	rs
-	storeb	r5, rs
-	dec		r5
-	dec		rc
-	testz	rc
-	jnz		L0
+    dec     rs
+    storeb  r5, rs
+    dec     r5
+    dec     rc
+    testz   rc
+    jnz     L0
 
-	mov		rs, r0
-	mov		r4, r1
-	call 	puts
+    mov     rs, r0
+    mov     r4, r1
+    call    puts
 
-	setb	r0, 0xa
-	call	putchar
+    setb    r0, 0xa
+    call    putchar
 
-	add		r4, rs, rs
-
-local exit:
-    setb    rx, 7
-    setb    r0, 0
-    syscall
-
-
-# function puts
-# r0: char *
-# r1: num of characters to print
-# rx <- number of characters writen or error code if something went wrong
-# notes: caller's r2 is overwriten
-global puts:
-	mov		r1, r2
-	mov		r0, r1
-	setb	r0, 1
-	setb	rx, 1
-	syscall
-	ret
-
-# function putchar
-# prints a given character to stdout
-# r0: char
-global putchar:
-	dec		rs
-	storeb	r0, rs
-	setb	r0, 1
-	mov		rs, r1
-	setb	r2, 1
-	setb	rx, 1
-	syscall
-	inc		rs
-	ret
-
-global debug_cpu:
-	setb	rx, 0x42
-	syscall
-	ret
-
-global debug_stack:
-	setb	rx, 0x43
-	syscall
-	ret
+    add     r4, rs, rs
+    zero    rx
+    ret
