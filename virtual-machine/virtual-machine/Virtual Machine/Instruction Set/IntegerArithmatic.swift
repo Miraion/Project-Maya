@@ -8,99 +8,123 @@
 
 import Foundation
 
-class Add : BasicTernaryInstruction, TernaryInstruction {
-    func run() {
-        let x = srcRegA.quad.addingReportingOverflow(srcRegB.quad)
+class IntegerAddition : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        let x = srcRegA.get(as: T.self).addingReportingOverflow(srcRegB.get(as: T.self))
         dstReg.set(x.partialValue)
         VPU.OF = x.overflow
     }
 }
 
-class Sub : BasicTernaryInstruction, TernaryInstruction {
-    func run() {
-        let x = srcRegA.quad.subtractingReportingOverflow(srcRegB.quad)
+
+class IntegerSubtraction : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        let x = srcRegA.get(as: T.self).subtractingReportingOverflow(srcRegB.get(as: T.self))
         dstReg.set(x.partialValue)
         VPU.OF = x.overflow
     }
 }
 
-class Mul : BasicTernaryInstruction, TernaryInstruction {
-    func run() {
-        let x = srcRegA.quad.multipliedReportingOverflow(by: srcRegB.quad)
+
+class IntegerMultiplication : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        let x = srcRegA.get(as: T.self).multipliedReportingOverflow(by: srcRegB.get(as: T.self))
         dstReg.set(x.partialValue)
         VPU.OF = x.overflow
     }
 }
 
-class Div : BasicTernaryInstruction, TernaryInstruction {
-    func run() {
-        let x = srcRegA.quad.dividedReportingOverflow(by: srcRegB.quad)
+
+class IntegerDivision : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        let x = srcRegA.get(as: T.self).dividedReportingOverflow(by: srcRegB.get(as: T.self))
         dstReg.set(x.partialValue)
        VPU.OF = x.overflow
     }
 }
 
-class Neg : BasicBinaryInstruction, BinaryInstruction {
-    func run() {
-        let x = -src.get(as: SignedQuad.self)
-        dst.set(x)
-    }
-}
 
-class Inc : BasicUnaryInstruction, UnaryInstruction {
-    func run() {
-        let x = src.quad.addingReportingOverflow(1)
-        src.quad = x.partialValue
+class IntegerModulo : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        let x = srcRegA.get(as: T.self).remainderReportingOverflow(dividingBy: srcRegB.get(as: T.self))
+        dstReg.set(x.partialValue)
         VPU.OF = x.overflow
     }
 }
 
-class Dec : BasicUnaryInstruction, UnaryInstruction {
-    func run() {
-        let x = src.quad.subtractingReportingOverflow(1)
-        src.quad = x.partialValue
+
+class IntegerNegation : BasicBinaryInstruction, ModdableInstruction, BinaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        let x = T(0).subtractingReportingOverflow(src.get(as: T.self))
         VPU.OF = x.overflow
+        dst.set(x.partialValue)
     }
 }
 
-class ImmAdd<I: FixedWidthInteger> : ImmediateInstruction {
+
+class Increment : ModdableInstruction, ImmediateInstruction {
     var reg = VirtualRegister()
     var extractor: FileDecoder? = nil
+    var modifier: UInt8 = 0
     
     func setup(reg: VirtualRegister, extractor: FileDecoder) {
         self.reg = reg
         self.extractor = extractor
     }
     
-    func run() throws {
-        if let x = extractor!.extract(as: I.self) {
-            let y = reg.get(as: I.self)
-            let z = x.addingReportingOverflow(y)
-            reg.set(z.partialValue)
-            VPU.OF = z.overflow
+    func run<T: FixedWidthInteger>(as: T.Type) throws {
+        if let x = extractor?.extract(as: T.self) {
+            let y = reg.get(as: T.self).addingReportingOverflow(x)
+            reg.set(y.partialValue)
+            VPU.OF = y.overflow
         } else {
             throw VirtualMachine.RuntimeError.SegmentationFault
         }
     }
 }
 
-class ImmSub<I: FixedWidthInteger> : ImmediateInstruction {
+
+class Decrement : ModdableInstruction, ImmediateInstruction {
     var reg = VirtualRegister()
     var extractor: FileDecoder? = nil
+    var modifier: UInt8 = 0
     
     func setup(reg: VirtualRegister, extractor: FileDecoder) {
         self.reg = reg
         self.extractor = extractor
     }
     
-    func run() throws {
-        if let x = extractor!.extract(as: I.self) {
-            let y = reg.get(as: I.self)
-            let z = y.subtractingReportingOverflow(x)
-            reg.set(z.partialValue)
-            VPU.OF = z.overflow
+    func run<T: FixedWidthInteger>(as: T.Type) throws {
+        if let x = extractor?.extract(as: T.self) {
+            let y = reg.get(as: T.self).subtractingReportingOverflow(x)
+            reg.set(y.partialValue)
+            VPU.OF = y.overflow
         } else {
             throw VirtualMachine.RuntimeError.SegmentationFault
         }
+    }
+}
+
+
+class ShiftLeft : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        let src = srcRegA.get(as: T.self)
+        let ammount = srcRegB.get(as: T.self)
+        let result = src.shiftingLeftReportingOverflow(ammount)
+        dstReg.set(result.partialValue)
+        VPU.OF = result.overflow
+        VPU.CF = result.overflow
+    }
+}
+
+
+class ShiftRight : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        let src = srcRegA.get(as: T.self)
+        let ammount = srcRegB.get(as: T.self)
+        let result = src.shiftingRightReportingOverflow(ammount)
+        dstReg.set(result.partialValue)
+        VPU.OF = result.overflow
+        VPU.CF = result.overflow
     }
 }

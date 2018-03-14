@@ -1,0 +1,156 @@
+# stdio.mia
+#
+# This file contains functions responsable for printing
+# various different objects to stdout along with some
+# helper functions that deal with raw strings.
+#
+# This file also contains the global variable definitions
+# of stdin, stdout, and stderr as 32-bit integers.
+
+section text
+
+# func write(outdev: int32, str: char *, n: int32) -> int32
+#
+# The lowest level print style function. Writes `n` bytes
+# to a specified output device.
+#
+# outdev = 0: stdin
+# outdev = 1: stdout
+# outdev = 2: stderr
+global write:
+    set.b   0x1, rx
+    syscall
+    ret
+
+
+# func read(indev: int32, buf: char *, n: int32) -> int32
+#
+# The lowest level input style function. Reads `n` bytes of
+# data from a given input device and stores the data in`buf`.
+#
+# outdev = 0: stdin
+# outdev = 1: stdout
+# outdev = 2: stderr
+global read:
+    set.b   0x2, rx
+    syscall
+    ret
+
+
+# func strlen(std: const char *) -> int32
+#
+# Returns the length of a given string not
+# including the null terminating character.
+#
+# examples: 
+#   "hello world\n\0" -> 12
+#   "\0" -> 0
+global strlen:
+    push.q  rc
+    zero    rc
+local strlen_L0:
+    lfm.b   r0, r1
+    testz   r1
+    jz      strlen_L1
+    inc.l   1, rc
+    inc.q   1, r0
+    jmp     strlen_L0
+local strlen_L1:
+    move.l  rc, rx
+    pop.q   rc
+    ret
+
+
+# func puts(str: char *) -> void
+#
+# Prints a null terminating string to stdout.
+global puts:
+    push.q  r0
+    call    strlen
+    pop.q   r1
+    move.l  rx, r2
+    load.l  stdout, r0
+    call    write
+    ret
+
+
+# func putsln(str: char *) -> void
+#
+# Prints a null terminating string to stdout along along
+# with a newline character.
+global putsln:
+    call puts
+    set.b   0xa, r0
+    call    putc
+    ret
+
+
+# func putc(c: char) -> void
+#
+# Prints a single character to stdout.
+global putc:
+    dec.q   1, rs
+    stm.b   r0, rs
+    load.l  stdout, r0
+    move.q  rs, r1
+    set.b   1, r2
+    call    write
+    inc.q   1, rs
+    ret
+
+
+# func putu(n: uint64) -> void
+#
+# Prints an unsigned decimal value to stdout.
+global putu:
+    set.b   10, r1
+    zero    r3
+local putu_L0:
+    mod.q   r0, r1, r2
+    inc.q   0x30, r2    # turn decimal into ascii char
+    push.b  r2
+    inc.q   1, r3
+    div.q   r0, r1, r0
+    testz   r0
+    jz      putu_L1
+    jmp     putu_L0
+local putu_L1:
+    mod.q   r0, r1, rx
+    testz   rx
+    jnz      putu_L0
+    load.l  stdout, r0
+    move.q  rs, r1
+    move.q  r3, r2
+    call    write
+    add.q   r3, rs, rs
+    ret
+
+
+# @regsafe
+# func putln()
+# 
+# Prints a single '\n' character to stdout.
+global putln:
+    push.q  r0
+    push.q  r1
+    push.q  r2
+    set.b   10, r0
+    call    putc
+    pop.q   r2
+    pop.q   r1
+    pop.q   r0
+    ret
+
+
+section data
+
+# --- Standard IO devices --- #
+
+# let stdin: int32 = 0
+global stdin:   long 0x0
+
+# let stdout: int32 = 1
+global stdout:  long 0x1
+
+# let stderr: int32 = 2
+global stderr:  long 0x2

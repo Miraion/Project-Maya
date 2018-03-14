@@ -24,6 +24,7 @@ extension Lexer {
         case keyword
         case label
         case instruction
+        case modifier
     }
     
     struct WordToken : BasicToken {

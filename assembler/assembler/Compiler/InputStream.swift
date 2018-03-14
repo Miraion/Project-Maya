@@ -26,6 +26,12 @@ class InputStream {
         }
     }
     
+    /// Creates an input stream from a string literal.
+    init (from string: String) {
+        self.filename = ":string literal:"
+        self.contents = string.utf8.map { $0 }
+    }
+    
     /// Extracts a single utf8 character from the stream.
     /// Returns nil if there are no remaining characters in the stream.
     @discardableResult

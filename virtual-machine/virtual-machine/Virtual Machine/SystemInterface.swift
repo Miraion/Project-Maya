@@ -11,17 +11,31 @@ import Darwin.C
 
 class SystemInterface {
     
+    var externalAllocatedMemory = Swift.Set<Quad>()
+    
+    
     enum RuntimeError : Error {
         case BadAccess(addr: Quad)
     }
     
+    
     func write(outputDevice: Quad, bufferAddr: Quad, size: Quad) throws -> Int {
         if let charPtr = UnsafeRawPointer(bitPattern: UInt(bufferAddr)) {
-            return Darwin.write(Int32(outputDevice), charPtr, Int(size))
+            return Darwin.write(Int32(truncatingIfNeeded: outputDevice), charPtr, Int(size))
         } else {
             throw RuntimeError.BadAccess(addr: bufferAddr)
         }
     }
+    
+    
+    func read(inputDevice: Quad, bufferAddr: Quad, capacity: Quad) throws -> Int {
+        if let buf = UnsafeMutableRawPointer(bitPattern: UInt(bufferAddr)) {
+            return Darwin.read(Int32(truncatingIfNeeded: inputDevice), buf, Int(capacity))
+        } else {
+            throw RuntimeError.BadAccess(addr: bufferAddr)
+        }
+    }
+    
     
     func debugVPUStatus(mode: Quad) -> Int {
         if mode == 0 {
@@ -34,6 +48,7 @@ class SystemInterface {
             return -1
         }
     }
+    
     
     func debugStackState(size: Quad) -> Int {
         for i in 0..<Int(size) {
@@ -53,9 +68,31 @@ class SystemInterface {
         return 0
     }
     
+    
     func killExecution(exitCode: Quad) {
         VM.continueExecution = false
         VM.exitCode = Int(bitPattern: UInt(exitCode))
+    }
+    
+    
+    func allocate(capacity: Quad) throws -> Quad {
+        if let ptr = malloc(Int(capacity)) {
+            let addr = Quad(UInt(bitPattern: ptr))
+            externalAllocatedMemory.insert(addr)
+            return addr
+        } else {
+            throw VirtualMachine.RuntimeError.SegmentationFault
+        }
+    }
+    
+    
+    func deallocate(addr: Quad) throws {
+        if externalAllocatedMemory.remove(addr) != nil {
+            let ptr = UnsafeMutableRawPointer(bitPattern: UInt(addr))
+            free(ptr)
+        } else {
+            throw VirtualMachine.RuntimeError.FreeUnallocatedAddress(addr: addr)
+        }
     }
     
 }

@@ -28,6 +28,14 @@ class Compiler {
     private var mode: CompilerMode = .null
     
     
+    func compile(file: String) throws -> ObjectFile {
+        guard let istream = InputStream(file: file) else {
+            throw AssemblerError.Default(msg: "Unable to open \(file).")
+        }
+        return try compile(stream: istream, filename: file)
+    }
+    
+    
     /**
      Attempts to compile a source file with a given path into a binary object file.
      
@@ -47,11 +55,7 @@ class Compiler {
         `Lexer`, and `InputStream` classes propagate through this method.
      
      */
-    func compile(file: String) throws -> ObjectFile {
-        let filename = file
-        guard let istream = InputStream(file: filename) else {
-            throw AssemblerError.Default(msg: "Unable to open input stream from \"\(filename)\".")
-        }
+    func compile(stream istream: InputStream, filename: String) throws -> ObjectFile {
         let lexer = try Lexer(stream: istream)
         let parser = Parser(lexer: lexer)
         let ostream = BinaryStream()
@@ -86,26 +90,47 @@ class Compiler {
                 // No operands for a void type instruction.
                 case .void: continue
                     
-                // Write out a single register.
+                // Write out a single register and modifier.
                 case .unary:
-                    ostream.append(byte: encodeRegister(package.tokens[1])!)
+                    var mod: UInt8 = 0
+                    var idx = 0
+                    if let m = encodeModifier(package.tokens[1]) {
+                        mod = m
+                        idx = 1
+                    }
+                    let reg = encodeRegister(package.tokens[idx + 1])!
+                    let byte = ((mod << 4) & 0xf0) | (reg & 0x0f)
+                    ostream.append(byte: byte)
                     byteCount += 1
                     
-                // Write out 2 registers, combining them into a single byte.
+                // Write out 2 registers and a modifier.
                 case .binary:
-                    let dst = encodeRegister(package.tokens[2])!
-                    let src = encodeRegister(package.tokens[1])!
-                    let b = dst | ((src << 4) & 0xf0)
-                    ostream.append(byte: b)
-                    byteCount += 1
+                    var mod: UInt8 = 0
+                    var idx = 0
+                    if let m = encodeModifier(package.tokens[1]) {
+                        mod = m
+                        idx = 1
+                    }
+                    let dst = encodeRegister(package.tokens[idx + 2])!
+                    let src = encodeRegister(package.tokens[idx + 1])!
+                    let b = dst | ((mod << 4) & 0xf0)
+                    ostream.append(bytes:[b, src])
+                    byteCount += 2
                 
-                // Write out 3 registers.
+                // Write out 3 registers and a modifier.
                 case .ternay:
-                    let dst = encodeRegister(package.tokens[3])!
-                    let srcA = encodeRegister(package.tokens[1])!
-                    let srcB = encodeRegister(package.tokens[2])!
+                    var mod: UInt8 = 0
+                    var idx = 0
+                    if let m = encodeModifier(package.tokens[1]) {
+                        mod = m
+                        idx = 1
+                    }
+                    let dst = encodeRegister(package.tokens[idx + 3])!
+                    let srcA = encodeRegister(package.tokens[idx + 1])!
+                    let srcB = encodeRegister(package.tokens[idx + 2])!
                     let srcByte = srcB | ((srcA << 4) & 0xf0)
-                    ostream.append(bytes: [dst, srcByte])
+                    let dstByte = dst | ((mod << 4) & 0xf0)
+                    ostream.append(bytes: [dstByte, srcByte])
                     byteCount += 2
                 
                 // Write out a 64-bit address.
@@ -116,15 +141,21 @@ class Compiler {
                     
                 // Write out a register and a 64-bit address.
                 case .binaryAddrFirst:
-                    let reg = encodeRegister(package.tokens[2])!
+                    var mod: UInt8 = 0
+                    var idx = 0
+                    if let m = encodeModifier(package.tokens[1]) {
+                        mod = m
+                        idx = 1
+                    }
+                    let reg = encodeRegister(package.tokens[idx + 2])!
+                    let regByte = (reg & 0x0f) | ((mod << 4) & 0xf0)
                     byteCount += 1
-                    let addr = encodeAddress(package.tokens[1])
-                    ostream.append(byte: reg)
+                    let addr = encodeAddress(package.tokens[idx + 1])
+                    ostream.append(byte: regByte)
                     ostream.append(addr, as: UInt64.self)
                     byteCount += 8
                     
-                // Same write-out format as the above case, but the operands are in different locations
-                // within the package.
+                // Same write-out format as the above case, but the operands are in different locations within the package.
                 case .binaryAddrLast:
                     let reg = encodeRegister(package.tokens[1])!
                     byteCount += 1
@@ -136,34 +167,32 @@ class Compiler {
                 // Write out a register and a literal of a given size.
                 // Here there is no fixed location for each operand in the package so we extract them
                 // based on their type. The write-out format is the same none the less.
+                case .imm:
+                    guard let mod = encodeModifier(package.tokens[1]) else {
+                        throw AssemblerError.ParserError(file: filename, line: lexer.lineNum, msg: "Invalid instruction modifier")
+                    }
+                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register })!)!
+                    let imm = (package.tokens.first(where: { $0.type == .literal }) as! Lexer.ImmToken).value
+                    let byte = reg | ((mod << 4) & 0xf0)
+                    ostream.append(byte: byte)
+                    byteCount += 1
+                    switch (mod) {
+                    case 1:
+                        ostream.append(UInt8(truncatingIfNeeded: imm), as: UInt8.self)
+                        byteCount += 1
+                    case 2:
+                        ostream.append(UInt16(truncatingIfNeeded: imm), as: UInt16.self)
+                        byteCount += 2
+                    case 3:
+                        ostream.append(UInt32(truncatingIfNeeded: imm), as: UInt32.self)
+                        byteCount += 4
+                    case 4:
+                        ostream.append(UInt64(truncatingIfNeeded: imm), as: UInt64.self)
+                        byteCount += 8
+                    default:
+                        throw AssemblerError.Default(msg: "Invalid modifier code \(mod).")
+                    }
                     
-                case .imm64:
-                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
-                    let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt64.self)
-                    ostream.append(byte: reg)
-                    ostream.append(imm, as: UInt64.self)
-                    byteCount += 9
-                    
-                case .imm32:
-                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
-                    let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt32.self)
-                    ostream.append(byte: reg)
-                    ostream.append(imm, as: UInt32.self)
-                    byteCount += 5
-                    
-                case .imm16:
-                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
-                    let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt16.self)
-                    ostream.append(byte: reg)
-                    ostream.append(imm, as: UInt16.self)
-                    byteCount += 3
-                    
-                case .imm8:
-                    let reg = encodeRegister(package.tokens.first(where: { $0.type == .register } )!)!
-                    let imm = encodeImm(package.tokens.first(where: { $0.type == .literal } )!, as: UInt8.self)
-                    ostream.append(byte: reg)
-                    ostream.append(imm, as: UInt8.self)
-                    byteCount += 2
                 } // switch (encode format)
                 
             } // if package.tokens.first?.type == .instruction
@@ -313,6 +342,25 @@ class Compiler {
         case "rs": return 0xe
         case "rx": return 0xf
         default: return nil
+        }
+    }
+    
+    
+    /// Encodes an instruction modifier from a token.
+    private func encodeModifier(_ token: BasicToken) -> UInt8? {
+        if let t = token as? Lexer.WordToken {
+            let text = t.text
+            switch (text) {
+            case "b": return 0x01
+            case "w": return 0x02
+            case "l": return 0x03
+            case "q": return 0x04
+            case "fs": return 0x05
+            case "fd": return 0x06
+            default: return nil
+            }
+        } else {
+            return nil
         }
     }
     

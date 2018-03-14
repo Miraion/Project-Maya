@@ -7,13 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3F0A373F204DFF0A0025BA17 /* BasicInstructionTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F0A373E204DFF0A0025BA17 /* BasicInstructionTypes.swift */; };
+		3F0A37412050BBB00025BA17 /* FixedWidthIntegerExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F0A37402050BBB00025BA17 /* FixedWidthIntegerExtension.swift */; };
 		3FC7952320414C7000F55E74 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7952220414C7000F55E74 /* main.swift */; };
 		3FC7953F20414CD400F55E74 /* VirtualCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7952B20414CD400F55E74 /* VirtualCore.swift */; };
 		3FC7954020414CD400F55E74 /* VirtualRegister.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7952C20414CD400F55E74 /* VirtualRegister.swift */; };
 		3FC7954120414CD400F55E74 /* TypeManipulation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7952D20414CD400F55E74 /* TypeManipulation.swift */; };
 		3FC7954220414CD400F55E74 /* VirtualProcessingUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7952E20414CD400F55E74 /* VirtualProcessingUnit.swift */; };
-		3FC7954320414CD400F55E74 /* Decoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7952F20414CD400F55E74 /* Decoder.swift */; };
-		3FC7954420414CD400F55E74 /* Executer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953020414CD400F55E74 /* Executer.swift */; };
+		3FC7954320414CD400F55E74 /* FileDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7952F20414CD400F55E74 /* FileDecoder.swift */; };
+		3FC7954420414CD400F55E74 /* Executor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953020414CD400F55E74 /* Executor.swift */; };
 		3FC7954520414CD400F55E74 /* VirtualMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953120414CD400F55E74 /* VirtualMachine.swift */; };
 		3FC7954620414CD400F55E74 /* SystemInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953220414CD400F55E74 /* SystemInterface.swift */; };
 		3FC7954720414CD400F55E74 /* IntegerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953420414CD400F55E74 /* IntegerLogic.swift */; };
@@ -22,7 +24,7 @@
 		3FC7954A20414CD400F55E74 /* SystemCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953720414CD400F55E74 /* SystemCall.swift */; };
 		3FC7954B20414CD400F55E74 /* MemoryInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953820414CD400F55E74 /* MemoryInterface.swift */; };
 		3FC7954C20414CD400F55E74 /* Subroutine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953920414CD400F55E74 /* Subroutine.swift */; };
-		3FC7954D20414CD400F55E74 /* Mov.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953A20414CD400F55E74 /* Mov.swift */; };
+		3FC7954D20414CD400F55E74 /* Move.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953A20414CD400F55E74 /* Move.swift */; };
 		3FC7954E20414CD400F55E74 /* InstructionFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953B20414CD400F55E74 /* InstructionFormat.swift */; };
 		3FC7954F20414CD400F55E74 /* Set.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953C20414CD400F55E74 /* Set.swift */; };
 		3FC7955020414CD400F55E74 /* BoolExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC7953E20414CD400F55E74 /* BoolExtension.swift */; };
@@ -42,14 +44,16 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3F0A373E204DFF0A0025BA17 /* BasicInstructionTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicInstructionTypes.swift; sourceTree = "<group>"; };
+		3F0A37402050BBB00025BA17 /* FixedWidthIntegerExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedWidthIntegerExtension.swift; sourceTree = "<group>"; };
 		3FC7951F20414C7000F55E74 /* virtual-machine */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "virtual-machine"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3FC7952220414C7000F55E74 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		3FC7952B20414CD400F55E74 /* VirtualCore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VirtualCore.swift; sourceTree = "<group>"; };
 		3FC7952C20414CD400F55E74 /* VirtualRegister.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VirtualRegister.swift; sourceTree = "<group>"; };
 		3FC7952D20414CD400F55E74 /* TypeManipulation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeManipulation.swift; sourceTree = "<group>"; };
 		3FC7952E20414CD400F55E74 /* VirtualProcessingUnit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VirtualProcessingUnit.swift; sourceTree = "<group>"; };
-		3FC7952F20414CD400F55E74 /* Decoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Decoder.swift; sourceTree = "<group>"; };
-		3FC7953020414CD400F55E74 /* Executer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Executer.swift; sourceTree = "<group>"; };
+		3FC7952F20414CD400F55E74 /* FileDecoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileDecoder.swift; sourceTree = "<group>"; };
+		3FC7953020414CD400F55E74 /* Executor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Executor.swift; sourceTree = "<group>"; };
 		3FC7953120414CD400F55E74 /* VirtualMachine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VirtualMachine.swift; sourceTree = "<group>"; };
 		3FC7953220414CD400F55E74 /* SystemInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemInterface.swift; sourceTree = "<group>"; };
 		3FC7953420414CD400F55E74 /* IntegerLogic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegerLogic.swift; sourceTree = "<group>"; };
@@ -58,7 +62,7 @@
 		3FC7953720414CD400F55E74 /* SystemCall.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SystemCall.swift; sourceTree = "<group>"; };
 		3FC7953820414CD400F55E74 /* MemoryInterface.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MemoryInterface.swift; sourceTree = "<group>"; };
 		3FC7953920414CD400F55E74 /* Subroutine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Subroutine.swift; sourceTree = "<group>"; };
-		3FC7953A20414CD400F55E74 /* Mov.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Mov.swift; sourceTree = "<group>"; };
+		3FC7953A20414CD400F55E74 /* Move.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Move.swift; sourceTree = "<group>"; };
 		3FC7953B20414CD400F55E74 /* InstructionFormat.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstructionFormat.swift; sourceTree = "<group>"; };
 		3FC7953C20414CD400F55E74 /* Set.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Set.swift; sourceTree = "<group>"; };
 		3FC7953E20414CD400F55E74 /* BoolExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoolExtension.swift; sourceTree = "<group>"; };
@@ -106,8 +110,8 @@
 			isa = PBXGroup;
 			children = (
 				3FC7952A20414CD400F55E74 /* Virtual Processing Unit */,
-				3FC7952F20414CD400F55E74 /* Decoder.swift */,
-				3FC7953020414CD400F55E74 /* Executer.swift */,
+				3FC7952F20414CD400F55E74 /* FileDecoder.swift */,
+				3FC7953020414CD400F55E74 /* Executor.swift */,
 				3FC7953120414CD400F55E74 /* VirtualMachine.swift */,
 				3FC7953220414CD400F55E74 /* SystemInterface.swift */,
 				3FC7953320414CD400F55E74 /* Instruction Set */,
@@ -135,10 +139,11 @@
 				3FC7953720414CD400F55E74 /* SystemCall.swift */,
 				3FC7953820414CD400F55E74 /* MemoryInterface.swift */,
 				3FC7953920414CD400F55E74 /* Subroutine.swift */,
-				3FC7953A20414CD400F55E74 /* Mov.swift */,
+				3FC7953A20414CD400F55E74 /* Move.swift */,
 				3FC7953B20414CD400F55E74 /* InstructionFormat.swift */,
 				3FC7953C20414CD400F55E74 /* Set.swift */,
 				3FC795512042016800F55E74 /* Comparison.swift */,
+				3F0A373E204DFF0A0025BA17 /* BasicInstructionTypes.swift */,
 			);
 			path = "Instruction Set";
 			sourceTree = "<group>";
@@ -147,6 +152,7 @@
 			isa = PBXGroup;
 			children = (
 				3FC7953E20414CD400F55E74 /* BoolExtension.swift */,
+				3F0A37402050BBB00025BA17 /* FixedWidthIntegerExtension.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -213,17 +219,19 @@
 				3FC7954A20414CD400F55E74 /* SystemCall.swift in Sources */,
 				3FC7954120414CD400F55E74 /* TypeManipulation.swift in Sources */,
 				3FC7954220414CD400F55E74 /* VirtualProcessingUnit.swift in Sources */,
+				3F0A373F204DFF0A0025BA17 /* BasicInstructionTypes.swift in Sources */,
 				3FC7953F20414CD400F55E74 /* VirtualCore.swift in Sources */,
 				3FC7954520414CD400F55E74 /* VirtualMachine.swift in Sources */,
 				3FC795522042016800F55E74 /* Comparison.swift in Sources */,
-				3FC7954D20414CD400F55E74 /* Mov.swift in Sources */,
-				3FC7954420414CD400F55E74 /* Executer.swift in Sources */,
+				3FC7954D20414CD400F55E74 /* Move.swift in Sources */,
+				3FC7954420414CD400F55E74 /* Executor.swift in Sources */,
 				3FC7954F20414CD400F55E74 /* Set.swift in Sources */,
 				3FC7954720414CD400F55E74 /* IntegerLogic.swift in Sources */,
 				3FC7952320414C7000F55E74 /* main.swift in Sources */,
 				3FC7954C20414CD400F55E74 /* Subroutine.swift in Sources */,
-				3FC7954320414CD400F55E74 /* Decoder.swift in Sources */,
+				3FC7954320414CD400F55E74 /* FileDecoder.swift in Sources */,
 				3FC7954920414CD400F55E74 /* Jump.swift in Sources */,
+				3F0A37412050BBB00025BA17 /* FixedWidthIntegerExtension.swift in Sources */,
 				3FC7954E20414CD400F55E74 /* InstructionFormat.swift in Sources */,
 				3FC7954020414CD400F55E74 /* VirtualRegister.swift in Sources */,
 				3FC7954B20414CD400F55E74 /* MemoryInterface.swift in Sources */,

@@ -1,6 +1,6 @@
 //
 //  VirtualMachine.swift
-//  ivm
+//  virtual-machine
 //
 //  Created by Jeremy S on 2018-02-20.
 //  Copyright © 2018 Jeremy S. All rights reserved.
@@ -19,6 +19,9 @@ class VirtualMachine {
         case SegmentationFault
         case FileError(filename: String)
         case StackOverflow
+        case InvalidModifier(mod: Byte)
+        case UnableToAllocateMemory
+        case FreeUnallocatedAddress(addr: Quad)
     }
 
     let vpu = VirtualProcessingUnit()
@@ -38,25 +41,18 @@ class VirtualMachine {
         return Quad(UInt(bitPattern: memorySpace))
     }
     
-    
     var debugMode: Bool = false
     var continueExecution = true
     var exitCode = 0
     
-//    var endOfMemorySpace: Quad {
-//        return stackAddress + memorySpaceSize
-//    }
-    
-    let memorySpaceSize: Quad = 0x4000  // 16 killobytes
-    
-    let callStackSize: Int = 0x8000
+    let callStackSize: Int = 0x8000  // 32 KB call stack
     
     init() {
         self.memorySpace = nil
     }
     
     func execute(file: String) throws -> Int {
-        let executor: Executer
+        let executor: Executor
         let fileBytes: UnsafePointer<Byte>
         let fileSize: Int
         
@@ -74,7 +70,7 @@ class VirtualMachine {
         
         codeSectionStart.initialize(from: fileBytes, count: fileSize)
         
-        executor = Executer(basePtr: codeSectionStart, size: fileSize)
+        executor = Executor(basePtr: codeSectionStart, size: fileSize)
         codeAddress = Quad(UInt(bitPattern: codeSectionStart))
         
         // Initalize registers
@@ -89,16 +85,16 @@ class VirtualMachine {
                 throw RuntimeError.SegmentationFault
             }
             
-//            print("Byte #: \(VPU.PC - codeAddress) - \(String(format: "%#.02x", executor.decoder.cursor!.pointee))")
-            
             if let opc = executor.decoder.extractByte() {
                 if let instruction = executor.generateInstruction(withOpcode: opc) {
                     try instruction.run()
                     if debugMode {
+                        print("Byte #: \(VPU.PC - codeAddress) - \(String(format: "%#.02x", executor.decoder.cursor!.pointee))")
                         VPU.printHex()
                         print()
                     }
                 } else {
+                    print("Byte count: \(VPU.PC - codeAddress)")
                     throw RuntimeError.InvalidOpcode(opc: opc)
                 }
             } else {
@@ -117,12 +113,15 @@ class VirtualMachine {
             throw RuntimeError.SegmentationFault
         }
         
-        memorySpace?.deallocate(capacity: Int(memorySpaceSize))
+        memorySpace?.deallocate(capacity: callStackSize + fileSize)
         
         return exitCode
     } // func execute
     
 } // class VirtualMachine
 
+/// Global instance of the virtual machine.
 let VM = VirtualMachine.instance
+
+/// Global instance of the single core located within the virtual machine's cpu.
 let VPU = VirtualMachine.instance.vpu.core

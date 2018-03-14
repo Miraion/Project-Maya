@@ -1,0 +1,74 @@
+# debug.mia
+# 
+# Functions in this file print the status of various system
+# components to stdout for debuging. These functions will
+# only work if the VPU is in debug mode (to be implemented).
+#
+# All the debug functions that are declared @regsafe will
+# restore the values of any registers that they use so it is
+# safe to call them without adhering to the function call
+# protocol.
+
+section text
+
+
+# @regsafe
+# func __debug_vpu_dec() -> void
+#
+# Prints the status of the cpu registers to stdout in decimal.
+global __debug_vpu_dec:
+    push.q  rx
+    set.b   0x42, rx
+    syscall
+    pop.q   rx
+    ret
+
+
+# @regsafe
+# func __debug_vpu_hex() -> void
+#
+# Prints the status of the cpu registers to stdout in hex.
+global __debug_vpu_hex:
+    push.q  rx
+    set.b   0x43, rx
+    syscall
+    pop.q   rx
+    ret
+
+
+# @regsafe
+# func __debug_stack(n: int) -> void
+#
+# Prints n quad-words (n * 8 bytes) of the stack to stdout.
+global __debug_stack:
+    push.q  rx
+    set.b   0x44, rx
+    syscall
+    pop.q   rx
+    ret
+
+
+# func debug_memory(ptr: raw_ptr, n: uint64) -> void
+#
+# Prints the `n` consecutive bytes starting at `ptr`.
+global debug_memory:
+    push.q  ra
+    push.q  rb
+    zero    rx
+    move.q  r0, ra
+    move.q  r1, rb
+local debug_memory_loop:
+    testz   rb
+    jz      debug_memory_ret
+    lfm.b   ra, r0
+    call    putu
+    set.b   0x20, r0
+    call    putc
+    inc.q   1, ra
+    dec.q   1, rb
+    jmp     debug_memory_loop
+local debug_memory_ret:
+    pop.q   rb
+    pop.q   ra
+    ret
+

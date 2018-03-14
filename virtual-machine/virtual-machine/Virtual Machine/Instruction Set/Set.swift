@@ -8,25 +8,25 @@
 
 import Foundation
 
-class Set<T: FixedWidthInteger> : ImmediateInstruction {
-    
+class Set : ModdableInstruction, ImmediateInstruction {
     var reg = VirtualRegister()
     var extractor: FileDecoder? = nil
+    var modifier: UInt8 = 0
     
     func setup(reg: VirtualRegister, extractor: FileDecoder) {
         self.reg = reg
         self.extractor = extractor
     }
     
-    func run() throws {
-        if let x = extractor!.extract(as: T.self) {
+    func run<T: FixedWidthInteger>(as: T.Type) throws {
+        if let x = extractor?.extract(as: T.self) {
             reg.set(x)
         } else {
             throw VirtualMachine.RuntimeError.SegmentationFault
         }
     }
-    
 }
+
 
 class Zero : BasicUnaryInstruction, UnaryInstruction {
     func run() {

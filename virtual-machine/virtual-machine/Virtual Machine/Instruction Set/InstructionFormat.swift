@@ -15,15 +15,15 @@ protocol Instruction {
 protocol VoidInstruction : Instruction {}
 
 protocol UnaryInstruction : Instruction {
-    func setup(src: VirtualRegister)
+    func setup(src: VirtualRegister/*, modifier: UInt8*/)
 }
 
 protocol BinaryInstruction : Instruction {
-    func setup(srca: VirtualRegister, dst: VirtualRegister)
+    func setup(srca: VirtualRegister, dst: VirtualRegister/*, modifier: UInt8*/)
 }
 
 protocol TernaryInstruction : Instruction {
-    func setup(srca: VirtualRegister, srcb: VirtualRegister, dst: VirtualRegister)
+    func setup(srca: VirtualRegister, srcb: VirtualRegister, dst: VirtualRegister/*, modifier: UInt8*/)
 }
 
 protocol UnaryAddrInstruction : Instruction {
@@ -36,53 +36,4 @@ protocol BinaryAddrInstruction : Instruction {
 
 protocol ImmediateInstruction : Instruction {
     func setup(reg: VirtualRegister, extractor: FileDecoder)
-}
-
-
-class BasicUnaryInstruction {
-    var src = VirtualRegister()
-    
-    func setup(src: VirtualRegister) {
-        self.src = src
-    }
-}
-
-class BasicBinaryInstruction {
-    var src = VirtualRegister()
-    var dst = VirtualRegister()
-    
-    func setup(srca: VirtualRegister, dst: VirtualRegister) {
-        self.src = srca
-        self.dst = dst
-    }
-}
-
-class BasicTernaryInstruction {
-    var srcRegA = VirtualRegister()
-    var srcRegB = VirtualRegister()
-    var dstReg  = VirtualRegister()
-    
-    func setup(srca: VirtualRegister, srcb: VirtualRegister, dst: VirtualRegister) {
-        self.srcRegA = srca
-        self.srcRegB = srcb
-        self.dstReg = dst
-    }
-}
-
-class BasicUnaryAddrInstruction {
-    var addr: Quad = 0
-    
-    func setup(addr: Quad) {
-        self.addr = addr
-    }
-}
-
-class BasicBinaryAddrInstruction {
-    var reg = VirtualRegister()
-    var addr: Quad = 0
-    
-    func setup(reg: VirtualRegister, addr: Quad) {
-        self.reg = reg
-        self.addr = addr
-    }
 }

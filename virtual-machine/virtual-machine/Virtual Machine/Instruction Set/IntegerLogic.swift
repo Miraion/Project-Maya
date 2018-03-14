@@ -8,26 +8,26 @@
 
 import Foundation
 
-class And : BasicTernaryInstruction, TernaryInstruction {
-    func run() {
-        dstReg.quad = srcRegA.quad & srcRegB.quad
+class And : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        dstReg.set(srcRegA.get(as: T.self) & srcRegB.get(as: T.self))
     }
 }
 
-class Or : BasicTernaryInstruction, TernaryInstruction {
-    func run() {
-        dstReg.quad = srcRegA.quad | srcRegB.quad
+class Or : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        dstReg.set(srcRegA.get(as: T.self) | srcRegB.get(as: T.self))
     }
 }
 
-class Xor : BasicTernaryInstruction, TernaryInstruction {
-    func run() {
-        dstReg.quad = srcRegA.quad ^ srcRegB.quad
+class Xor : BasicTernaryInstruction, ModdableInstruction, TernaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        dstReg.set(srcRegA.get(as: T.self) ^ srcRegB.get(as: T.self))
     }
 }
 
-class Not : BasicBinaryInstruction, BinaryInstruction {
-    func run() {
-        dst.quad = ~src.quad
+class Not : BasicBinaryInstruction, ModdableInstruction, BinaryInstruction {
+    func run<T: FixedWidthInteger>(as: T.Type) {
+        dst.set(~src.get(as: T.self))
     }
 }

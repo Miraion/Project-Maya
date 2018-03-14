@@ -127,6 +127,9 @@ class Lexer {
                     removeComment()
                     removeTailingWhiteSpace()
                     break
+                } else if istream.peek() == 0x2e { // '.'
+                    strBuilder.append(char)
+                    break;
                 }
                 isEscaped = false
                 strBuilder.append(char)
@@ -143,7 +146,7 @@ class Lexer {
                 
                 // Is the string an integer literal?
                 // Valid formats are decimal (no prefix), hex (0x prefix), or binary (0b prefix).
-                else if str.count != 0 && isNumber(strBuilder.first!) {
+                else if str.count != 0 && isNumber(strBuilder.first!) || strBuilder.first == 0x2d {
                     if let i = Int(str) {
                         return ImmToken(value: i)
                     } else if str.hasPrefix("0x") {
@@ -186,6 +189,10 @@ class Lexer {
                 // Is the string an instruction?
                 else if instructionMap.keys.contains(str) {
                     return WordToken(text: str, type: .instruction)
+                }
+                    
+                else if str.first == "." {
+                    return WordToken(text: String(str.dropFirst()), type: .modifier)
                 }
                 
                 // Is the string a label declaration?

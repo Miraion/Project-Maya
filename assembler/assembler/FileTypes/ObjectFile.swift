@@ -41,33 +41,28 @@ class ObjectFile {
         self.binary = BinaryStream()
     }
     
+    /// Creates an object file from an existing `BinaryStream` object parsing out
+    /// any metadata contained in the stream.
+    init? (from binaryStream: BinaryStream) {
+        self.binary = BinaryStream()
+        if let stream = extractMetadata(from: binaryStream) {
+            self.binary = stream
+        } else {
+            return nil
+        }
+    }
+    
     /// Opens an existing object file from disk.
     /// Extracts the metadata from the binary file, initalizing the maps with it.
     /// The resulting binary stream will not contain the metadata.
     init? (open file: String) {
         if let stream = BinaryStream(open: file) {
-            guard let globalCount = stream.extract(as: UInt64.self) else { return nil }
-            guard let unprocessedCount = stream.extract(as: UInt64.self) else { return nil }
-            
-            for _ in 0..<globalCount {
-                guard let loc = stream.extract(as: UInt64.self) else { return nil }
-                guard let name = stream.extractNullTerminatingString() else { return nil }
-                globalLabelMap[name] = Int(loc)
+            self.binary = BinaryStream()
+            if let noMetaStream = extractMetadata(from: stream) {
+                self.binary = noMetaStream
+            } else {
+                return nil
             }
-            
-            for _ in 0..<unprocessedCount {
-                guard let count = stream.extract(as: UInt64.self) else { return nil }
-                var locs = [Int]()
-                for _ in 0..<count {
-                    guard let loc = stream.extract(as: UInt64.self) else { return nil }
-                    locs.append(Int(loc))
-                }
-                guard let name = stream.extractNullTerminatingString() else { return nil }
-                unprocessedLabelMap[name] = locs
-            }
-            
-            self.binary = BinaryStream(NSMutableData(bytes: stream.cursor,
-                                                     length: stream .length - abs(stream.cursor.distance(to: stream.mutablebytes))))
         } else {
             return nil
         }
@@ -91,6 +86,32 @@ class ObjectFile {
         }
         stream.append(binary)
         stream.write(to: name)
+    }
+    
+    
+    private func extractMetadata(from stream: BinaryStream) -> BinaryStream? {
+        guard let globalCount = stream.extract(as: UInt64.self) else { return nil }
+        guard let unprocessedCount = stream.extract(as: UInt64.self) else { return nil }
+        
+        for _ in 0..<globalCount {
+            guard let loc = stream.extract(as: UInt64.self) else { return nil }
+            guard let name = stream.extractNullTerminatingString() else { return nil }
+            globalLabelMap[name] = Int(loc)
+        }
+        
+        for _ in 0..<unprocessedCount {
+            guard let count = stream.extract(as: UInt64.self) else { return nil }
+            var locs = [Int]()
+            for _ in 0..<count {
+                guard let loc = stream.extract(as: UInt64.self) else { return nil }
+                locs.append(Int(loc))
+            }
+            guard let name = stream.extractNullTerminatingString() else { return nil }
+            unprocessedLabelMap[name] = locs
+        }
+        
+        return BinaryStream(NSMutableData(bytes: stream.cursor,
+                                          length: stream .length - abs(stream.cursor.distance(to: stream.mutablebytes))))
     }
     
 }

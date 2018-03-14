@@ -1,0 +1,86 @@
+# stdlib.mia
+#
+# This file contains various functions that deal with memory
+# allocation and manipulation.
+
+section text
+
+# func malloc(capacity: uint64) -> raw_ptr
+#
+# Allocates a given number of contiguous bytes in memory.
+# Allocated memory must be freed using the free function.
+#
+# Since this code will run on a virtual machine, the system
+# interface will keep track of all allocated memory and
+# will report any memory leaks at the end of the runtime
+# session.
+global malloc:
+    set.b   0x5, rx
+    syscall
+    ret
+
+
+# func free(addr: raw_ptr) -> void
+#
+# Frees a pointer that had previously been allocated
+# using malloc. A system error will occur if an atempt
+# is made to free a pointer that was not allocated with
+# malloc.
+global free:
+    set.b   0x6, rx
+    syscall
+    ret
+
+
+# func zero_memory(ptr: raw_ptr, n: uint64)
+#
+# Sets the `n` consecutive bytes starting at `ptr` to 0.
+global zero_memory:
+    zero    rx
+local nullbuf_loop:
+    testz   r1
+    jz      nullbuf_ret
+    stm.b   rx, r0
+    inc.q   1, r0
+    dec.q   1, r1
+    jmp     nullbuf_loop
+local nullbuf_ret:
+    ret
+
+
+# func copy_memory(src: raw_ptr, dst: raw_ptr, n: uint64)
+#
+# Copies `n` bytes of memory from `src` buffer to `dst` buffer.
+# Memory buffers may NOT overlap.
+global copy_memory:
+    testz   r2
+    jz      copy_memory_ret
+    lfm.b   r0, r3
+    stm.b   r3, r1
+    inc.q   1, r0
+    inc.q   1, r1
+    dec.q   1, r2
+    jmp     copy_memory
+local copy_memory_ret:
+    ret
+
+
+# func move_memory(src: raw_ptr, dst: raw_ptr, n: uint64)
+#
+# Moves `n` bytes of memory from `src` buffer to `dst` buffer.
+# Unlike `copy_memory`, memory buffers may overlap because the
+# souce buffer is fist copied into a temporary buffer before
+# copying the temp buffer to the destination.
+global move_memory:
+    push.q  rb
+    push.q  r2
+    push.q  r1
+    sub.q   rs, r2, rb
+    move.q  rb, r1
+    call    copy_memory
+    pop.q   r1  # restore the original destination
+    pop.q   r2
+    move.q  rb, r0
+    call    copy_memory
+    pop.q   rb
+    ret

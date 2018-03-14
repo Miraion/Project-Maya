@@ -13,27 +13,6 @@ import Foundation
  */
 class Linker {
     
-    private var initFile: ObjectFile? = nil
-    
-    
-    /**
-     Loads the precompiled executable initalization file.
-     Must be called before attempting to call `linkToExecutable(_: [ObjectFiles])`.
-     
-     - parameter path: The path of the initalization file.
-     
-     - throws: `AssemberError.Default` if unable to open the given file.
-     
-     */
-    func setInitFile(to path: String) throws {
-        if let file = ObjectFile(open: path) {
-            self.initFile = file
-        } else {
-            throw AssemblerError.Default(msg: "Unable to find executable initalization file.")
-        }
-    }
-    
-    
     /**
      Links a series of object files into a single object file merging all of their metadata.
      
@@ -101,13 +80,12 @@ class Linker {
      - throws:
         `AssemblerError.UndefinedSymbols` if there are any remaining unprocessed labels
         after linking.
-     
-     - requires: `setInitFile(to: String)` to be sucessfully called.
-     
      */
     func linkToExecutable(_ objFiles: [ObjectFile]) throws -> ExecutableFile {
         let main = ExecutableFile()
-        var filesToLink = [initFile!]
+        let compiler = Compiler()
+        let initFile = try compiler.compile(stream: InputStream(from: executableInitalizationHeader), filename: "__exe_init__")
+        var filesToLink = [initFile]
         filesToLink.append(contentsOf: objFiles)
         let linkedArchive = try linkToArchive(filesToLink)
         main.binary = linkedArchive.binary

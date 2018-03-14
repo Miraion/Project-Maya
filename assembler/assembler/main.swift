@@ -8,8 +8,6 @@
 
 import Foundation
 
-let executableInitFile = "__init__.mio"
-
 if CommandLine.argc < 3 { showUsage() }
 
 do {
@@ -30,7 +28,6 @@ do {
         
     // "-o" flag tells the program to link the input files (object files) into an exectuable.
     else if CommandLine.arguments[1] == "-o" {
-        try linker.setInitFile(to: executableInitFile)
         if CommandLine.arguments.count < 4 {
             print("No input files proveded.")
             exit(1)
@@ -48,7 +45,7 @@ do {
     }
         
     // "-a" flag tells the program to link the input files (object files) into an archive (a bigger object file).
-    else if CommandLine.arguments[0] == "-a" {
+    else if CommandLine.arguments[1] == "-a" {
         if CommandLine.arguments.count < 4 {
             print("No input files proveded.")
             exit(1)
@@ -102,17 +99,3 @@ do {
     print("An unknown error occured: something went very wrong.")
     exit(101)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

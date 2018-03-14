@@ -8,16 +8,35 @@
 
 import Foundation
 
+/**
+ Delagate responsable for extracting encoded instructions and operands from a compiled source file.
+ Uses a NSData object to load the raw data from the file into memory.
+ 
+ Interfaces with the program counter located in the virtual processing unit to determine where in
+ the program the interpreter is.
+ */
 class FileDecoder {
     
+    /// Pointer to the file data.
     let data: UnsafePointer<Byte>
     
     /// Size of the file in bytes.
     let size: Int
+    
+    /**
+     Pointer used to record the current location in the file.
+     
+     - invariant: `cursor` will always point to the next byte to be extracted.
+     
+     - todo:
+        `cursor` variable looks to be redundant as the direct `VPU.PC` manipulation does its job.
+        As such, this variable should be removed in the future.
+     */
     var cursor: UnsafePointer<Byte>? {
         return UnsafePointer<Byte>(bitPattern: UInt(VPU.PC))
     }
     
+    /// Returns the number of bytes left to the end of the source file.
     var bytesLeft: Int {
         if let c = cursor {
             let l = size - data.distance(to: c)
@@ -27,6 +46,7 @@ class FileDecoder {
         }
     }
     
+    /// Initalization from a file located on disk.
     init? (filename: String) {
         let optionalfile = NSData(contentsOfFile: filename)
         if let file = optionalfile {
@@ -38,6 +58,7 @@ class FileDecoder {
         }
     }
     
+    /// Initalization from a pointer to a location in memory.
     init (basePtr: UnsafePointer<Byte>, size: Int) {
         self.data = basePtr
         self.size = size
@@ -77,6 +98,7 @@ class FileDecoder {
         }
     }
     
+    /// Extracts a given integer type. Integer is decoded as little endian.
     func extract<T: FixedWidthInteger>(as: T.Type) -> T? {
         if let c = cursor {
             let n = MemoryLayout<T>.size
@@ -94,9 +116,11 @@ class FileDecoder {
         }
     }
     
+    /// Returns a processor register based on a given value.
     func decodeRegister(from byte: Byte) -> VirtualRegister {
         let vpu = VPU
-        switch (byte) {
+        let b = byte & 0x0f
+        switch (b) {
         case 0x0: return vpu.r0
         case 0x1: return vpu.r1
         case 0x2: return vpu.r2
@@ -119,36 +143,47 @@ class FileDecoder {
         }
     }
     
-    func extractUnaryInstruction() -> Byte {
+    /// Extacts the 1-byte modifier + operand for a unary-type instruction and decodes them.
+    func extractUnaryInstruction() -> (mod: Byte, reg: Byte) {
         let byte = extractByte()!
-        return byte & 0x0f
+        let mod: Byte = (byte >> 4) & 0x0f
+        let reg: Byte = byte & 0x0f
+        return (mod, reg)
     }
     
-    func extractBinaryInstruction() -> (srcReg: Byte, dstReg: Byte) {
-        let byte1 = extractByte()!
-        let dst: Byte = byte1 & 0x0f
-        let src: Byte = (byte1 >> 4) & 0x0f
-        return (src, dst)
-    }
-    
-    func extractTernaryInstruction() -> (srcRegA: Byte, srcRegB: Byte, dstReg: Byte) {
+    /// Extracts the 2-byte modifier and operands for a binary-type instruction and decodes them.
+    func extractBinaryInstruction() -> (mod: Byte, srcReg: Byte, dstReg: Byte) {
         let byte1 = extractByte()!
         let byte2 = extractByte()!
         let dst: Byte = byte1 & 0x0f
-        let srca: Byte = (byte2 >> 4) & 0x0f
-        let srcb: Byte = byte2 & 0x0f
-        return (srca, srcb, dst)
+        let mod: Byte = (byte1 >> 4) & 0x0f
+        let src: Byte = byte2 & 0x0f
+        return (mod, src, dst)
     }
     
+    /// Extracts the 2-byte modifier and operands for a ternary-type instruction and decodes them.
+    func extractTernaryInstruction() -> (mod: Byte, srcRegA: Byte, srcRegB: Byte, dstReg: Byte) {
+        let byte1 = extractByte()!
+        let byte2 = extractByte()!
+        let dst: Byte = byte1 & 0x0f
+        let mod: Byte = (byte1 >> 4) & 0x0f
+        let srca: Byte = (byte2 >> 4) & 0x0f
+        let srcb: Byte = byte2 & 0x0f
+        return (mod, srca, srcb, dst)
+    }
+    
+    /// Extracts the 8-byte address for an address-type instruction.
     func extractUnaryAddrInstruction() -> Quad {
         return extract64BitLiteral()!
     }
     
-    func extractBinaryAddrInstruction() -> (reg: Byte, addr: Quad) {
+    /// Extracts the 9-byte address, modifier, and operand for a binary-addr-type instruction.
+    func extractBinaryAddrInstruction() -> (mod: Byte, reg: Byte, addr: Quad) {
         let byte1 = extractByte()!
         let dst: Byte = byte1 & 0xf
+        let mod: Byte = (byte1 >> 4) & 0x0f
         let addr = extract64BitLiteral()!
-        return (dst, addr)
+        return (mod, dst, addr)
     }
     
 }

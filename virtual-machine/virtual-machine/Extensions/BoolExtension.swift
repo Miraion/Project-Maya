@@ -7,7 +7,7 @@
 //
 
 extension Bool {
-    // Logical xor operator for Bool.
+    /// Logical xor operator for Bool.
     static func ^ (rhs: Bool, lhs: Bool) -> Bool {
         return (rhs || lhs) && !(rhs && lhs)
     }

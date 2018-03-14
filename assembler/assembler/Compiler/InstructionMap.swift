@@ -13,7 +13,7 @@ enum EncodingType {
     case void
     case unary;     case binary;    case ternay
     case unaryAddr; case binaryAddrFirst; case binaryAddrLast
-    case imm64;     case imm32;     case imm16;     case imm8
+    case imm
 }
 
 /// Map of instruction syntax definitions to 8-bit opcode, token extraction format, and encoding format.
@@ -26,47 +26,40 @@ fileprivate(set) var instructionMap = [String : (opc: UInt8, extractionFormat: T
  */
 func initInstructionMap() {
     
-    instructionMap["add"] = (0x10, TokenExtractionFormat(.register, .register, .register), .ternay)
-    instructionMap["sub"] = (0x11, TokenExtractionFormat(.register, .register, .register), .ternay)
-    instructionMap["mul"] = (0x12, TokenExtractionFormat(.register, .register, .register), .ternay)
-    instructionMap["div"] = (0x13, TokenExtractionFormat(.register, .register, .register), .ternay)
-    instructionMap["neg"] = (0x14, TokenExtractionFormat(.register, .register), .binary)
+    instructionMap["load"] = (0x10, TokenExtractionFormat(.modifier, .keyword, .register), .binaryAddrFirst)
+    instructionMap["lfm"] = (0x11, TokenExtractionFormat(.modifier, .register, .register), .binary)
+    instructionMap["store"] = (0x12, TokenExtractionFormat(.modifier, .keyword, .register), .binaryAddrFirst)
+    instructionMap["stm"] = (0x13, TokenExtractionFormat(.modifier, .register, .register), .binary)
+    instructionMap["move"] = (0x14, TokenExtractionFormat(.modifier, .register, .register), .binary)
+    instructionMap["set"] = (0x15, TokenExtractionFormat(.modifier, .literal, .register), .imm)
     
-    instructionMap["and"] = (0x20, TokenExtractionFormat(.register, .register, .register), .ternay)
-    instructionMap["or"]  = (0x21, TokenExtractionFormat(.register, .register, .register), .ternay)
-    instructionMap["xor"] = (0x22, TokenExtractionFormat(.register, .register, .register), .ternay)
-    instructionMap["not"] = (0x23, TokenExtractionFormat(.register, .register), .binary)
+    instructionMap["add"] = (0x20, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["sub"] = (0x21, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["mul"] = (0x22, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["div"] = (0x23, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["neg"] = (0x24, TokenExtractionFormat(.modifier, .register, .register), .binary)
     
-    instructionMap["inc"] = (0x31, TokenExtractionFormat(.register), .unary)
-    instructionMap["dec"] = (0x32, TokenExtractionFormat(.register), .unary)
-    instructionMap["mov"] = (0x33, TokenExtractionFormat(.register, .register), .binary)
-    instructionMap["push"] = (0x34, TokenExtractionFormat(.register), .unary)
-    instructionMap["pop"] = (0x35, TokenExtractionFormat(.register), .unary)
-    instructionMap["setq"] = (0x36, TokenExtractionFormat(.register, .literal), .imm64)
-    instructionMap["setl"] = (0x37, TokenExtractionFormat(.register, .literal), .imm32)
-    instructionMap["setw"] = (0x38, TokenExtractionFormat(.register, .literal), .imm16)
-    instructionMap["setb"] = (0x39, TokenExtractionFormat(.register, .literal), .imm8)
-    instructionMap["addq"] = (0x3a, TokenExtractionFormat(.literal, .register), .imm64)
-    instructionMap["addl"] = (0x3b, TokenExtractionFormat(.literal, .register), .imm32)
-    instructionMap["addw"] = (0x3c, TokenExtractionFormat(.literal, .register), .imm16)
-    instructionMap["addb"] = (0x46, TokenExtractionFormat(.literal, .register), .imm8)
-    instructionMap["subq"] = (0x3d, TokenExtractionFormat(.literal, .register), .imm64)
-    instructionMap["subl"] = (0x3e, TokenExtractionFormat(.literal, .register), .imm32)
-    instructionMap["subw"] = (0x3f, TokenExtractionFormat(.literal, .register), .imm16)
-    instructionMap["subb"] = (0x47, TokenExtractionFormat(.literal, .register), .imm8)
+    instructionMap["inc"] = (0x25, TokenExtractionFormat(.modifier, .literal, .register), .imm)
+    instructionMap["dec"] = (0x26, TokenExtractionFormat(.modifier, .literal, .register), .imm)
+    instructionMap["zero"] = (0x27, TokenExtractionFormat(.register), .unary)
+    instructionMap["and"] = (0x28, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["or"]  = (0x29, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["xor"] = (0x2a, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["not"] = (0x2b, TokenExtractionFormat(.modifier, .register, .register), .binary)
+    instructionMap["shl"] = (0x2c, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["shr"] = (0x2d, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["sal"] = (0x2e, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["sar"] = (0x2f, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
+    instructionMap["mod"] = (0x40, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
     
-    instructionMap["call"] = (0x40, TokenExtractionFormat(.keyword), .unaryAddr)
-    instructionMap["ret"] = (0x41, TokenExtractionFormat(), .void)
-    instructionMap["syscall"] = (0x42, TokenExtractionFormat(), .void)
-    instructionMap["zero"] = (0x44, TokenExtractionFormat(.register), .unary)
-    instructionMap["la"] = (0x45, TokenExtractionFormat(.keyword, .register), .binaryAddrFirst)
-    
-    instructionMap["cmp"] = (0x50, TokenExtractionFormat(.register, .register), .binary)
-    
-    instructionMap["testl"] = (0x53, TokenExtractionFormat(.register), .unary)
-    instructionMap["testw"] = (0x54, TokenExtractionFormat(.register), .unary)
-    instructionMap["testb"] = (0x55, TokenExtractionFormat(.register), .unary)
-    instructionMap["testz"] = (0x56, TokenExtractionFormat(.register), .unary)
+    instructionMap["call"] = (0x30, TokenExtractionFormat(.keyword), .unaryAddr)
+    instructionMap["ret"] = (0x31, TokenExtractionFormat(), .void)
+    instructionMap["syscall"] = (0x32, TokenExtractionFormat(), .void)
+    instructionMap["la"] = (0x33, TokenExtractionFormat(.keyword, .register), .binaryAddrFirst)
+    instructionMap["testz"] = (0x34, TokenExtractionFormat(.register), .unary)
+    instructionMap["cmp"] = (0x35, TokenExtractionFormat(.modifier, .register, .register), .binary)
+    instructionMap["push"] = (0x36, TokenExtractionFormat(.modifier, .register), .unary)
+    instructionMap["pop"] = (0x37, TokenExtractionFormat(.modifier, .register), .unary)
     
     instructionMap["jmp"] = (0x60, TokenExtractionFormat(.keyword), .unaryAddr)
     instructionMap["je"]  = (0x61, TokenExtractionFormat(.keyword), .unaryAddr)
@@ -95,19 +88,5 @@ func initInstructionMap() {
     instructionMap["jnae"]  = (0x6d, TokenExtractionFormat(.keyword), .unaryAddr)
     instructionMap["jbe"]   = (0x6e, TokenExtractionFormat(.keyword), .unaryAddr)
     instructionMap["jna"]   = (0x6e, TokenExtractionFormat(.keyword), .unaryAddr)
-    
-    instructionMap["lmq"] = (0x80, TokenExtractionFormat(.keyword, .register), .binaryAddrFirst)
-    instructionMap["lml"] = (0x81, TokenExtractionFormat(.keyword, .register), .binaryAddrFirst)
-    instructionMap["lmw"] = (0x82, TokenExtractionFormat(.keyword, .register), .binaryAddrFirst)
-    instructionMap["lmb"] = (0x83, TokenExtractionFormat(.keyword, .register), .binaryAddrFirst)
-    
-    instructionMap["loadq"] = (0x88, TokenExtractionFormat(.register, .register), .binary)
-    instructionMap["loadl"] = (0x89, TokenExtractionFormat(.register, .register), .binary)
-    instructionMap["loadw"] = (0x8a, TokenExtractionFormat(.register, .register), .binary)
-    instructionMap["loadb"] = (0x8b, TokenExtractionFormat(.register, .register), .binary)
-    instructionMap["storeq"] = (0x8c, TokenExtractionFormat(.register, .register), .binary)
-    instructionMap["storel"] = (0x8d, TokenExtractionFormat(.register, .register), .binary)
-    instructionMap["storew"] = (0x8e, TokenExtractionFormat(.register, .register), .binary)
-    instructionMap["storeb"] = (0x8f, TokenExtractionFormat(.register, .register), .binary)
     
 }

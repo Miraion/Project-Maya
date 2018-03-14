@@ -8,8 +8,12 @@
 
 import Foundation
 
+/// Class to represent the virtual cpu.
+///
+/// - todo: Expand the VPU to provide multi core support.
 class VirtualProcessingUnit {
     
+    /// A single cpu core, containing all 16 registers.
     var core = VirtualCore()
     
 }
