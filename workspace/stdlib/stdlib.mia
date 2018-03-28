@@ -15,7 +15,7 @@ section text
 # will report any memory leaks at the end of the runtime
 # session.
 global malloc:
-    set.b   0x5, rx
+    set.w   0x8000, rx
     syscall
     ret
 
@@ -27,7 +27,7 @@ global malloc:
 # is made to free a pointer that was not allocated with
 # malloc.
 global free:
-    set.b   0x6, rx
+    set.w   0x8001, rx
     syscall
     ret
 

@@ -18,7 +18,7 @@ section text
 # Prints the status of the cpu registers to stdout in decimal.
 global __debug_vpu_dec:
     push.q  rx
-    set.b   0x42, rx
+    set.w   0xc000, rx
     syscall
     pop.q   rx
     ret
@@ -30,7 +30,7 @@ global __debug_vpu_dec:
 # Prints the status of the cpu registers to stdout in hex.
 global __debug_vpu_hex:
     push.q  rx
-    set.b   0x43, rx
+    set.w  0xc001, rx
     syscall
     pop.q   rx
     ret
@@ -42,7 +42,7 @@ global __debug_vpu_hex:
 # Prints n quad-words (n * 8 bytes) of the stack to stdout.
 global __debug_stack:
     push.q  rx
-    set.b   0x44, rx
+    set.w   0xc002, rx
     syscall
     pop.q   rx
     ret

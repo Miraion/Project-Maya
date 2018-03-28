@@ -18,7 +18,7 @@ section text
 # outdev = 1: stdout
 # outdev = 2: stderr
 global write:
-    set.b   0x1, rx
+    set.b   0x4, rx
     syscall
     ret
 
@@ -32,7 +32,7 @@ global write:
 # outdev = 1: stdout
 # outdev = 2: stderr
 global read:
-    set.b   0x2, rx
+    set.b   0x3, rx
     syscall
     ret
 

@@ -1,0 +1,52 @@
+# ioctl.mia
+#
+# This file contains functions that deal with input/output
+# control on a system level.
+
+section text
+
+# func open(path: char *, flags: int32, mode: int32) -> int32
+#
+# Tells the system to open a file at a given path. Returns
+# a file descriptor for the file which may be used as in
+# functions like `read` and `write` to edit the file.
+#
+# The open `mode` takes a series of flags which are combined
+# using a bitwise or operator.
+#
+# Returns -1 if an error occured.
+global open:
+    set.b   0x5, rx
+    syscall
+    ret
+
+
+# func close(fd: int32) -> int32
+#
+# Tells the system to close a file with a given file
+# descriptor. Returns 0 upon success, -1 if something when
+# wrong.
+global close:
+    set.b   0x6, rx
+    syscall
+    ret
+
+
+section data
+
+# --- Open Flags --- #
+
+# For compatablilty, these flags are copied from fcntl.h
+
+global O_RDONLY:    word 0x0000 # open for reading only
+global O_WRONLY:    word 0x0001 # open for writing only
+global O_RDWR:      word 0x0002 # open for reading and writng
+global O_ACCMODE:   word 0x0003 # mask for above modes
+
+global O_APPEND:    word 0x0008 # set append mode
+global O_SHLOCK:    word 0x0010 # open with shared file lock
+global O_EXLOCK:    word 0x0020 # open with exclusive file lock
+global O_NOFOLLOW:  word 0x0100 # don't follow symlinks
+global O_CREAT:     word 0x0200 # create if nonexistant
+global O_TRUNC:     word 0x0400 # truncate to zero length
+global O_EXCL:      word 0x0800 # error if already exists

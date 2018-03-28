@@ -14,6 +14,6 @@ let executableInitalizationHeader: String =
 section text
     call    main
     move.l  rx, r0
-    set.b   7, rx
+    set.b   1, rx
     syscall
 """

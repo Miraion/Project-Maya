@@ -69,9 +69,14 @@ class SystemInterface {
     }
     
     
-    func killExecution(exitCode: Quad) {
+    func finishExecution(exitCode: Quad) {
         VM.continueExecution = false
         VM.exitCode = Int(bitPattern: UInt(exitCode))
+    }
+    
+    
+    func abortExecution(exitCode: Long) {
+        exit(Int32(bitPattern: exitCode))
     }
     
     
@@ -93,6 +98,16 @@ class SystemInterface {
         } else {
             throw VirtualMachine.RuntimeError.FreeUnallocatedAddress(addr: addr)
         }
+    }
+    
+    
+    func open(path: UnsafeRawPointer, mode: Int32) -> Int32 {
+        return Darwin.open(path.assumingMemoryBound(to: CChar.self), mode)
+    }
+    
+    
+    func close(fd: Int32) -> Int32 {
+        return Darwin.close(fd)
     }
     
 }

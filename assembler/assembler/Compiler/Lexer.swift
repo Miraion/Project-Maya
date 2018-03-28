@@ -107,6 +107,11 @@ class Lexer {
                 }
             }
             
+            // Check again if there are still tokens after removing comments and whitespace.
+            if istream.peek() == nil {
+                return nil
+            }
+            
             // Build a string of characters until a comment marker or whitespace
             // character is detected. Exceptions are made for string literals where
             // whitespace and comment markers are valid.
@@ -125,9 +130,8 @@ class Lexer {
                     break
                 } else if isCommentMarker(char) && !isConstructingStringLiteral {
                     removeComment()
-                    removeTailingWhiteSpace()
                     break
-                } else if istream.peek() == 0x2e { // '.'
+                } else if istream.peek() == 0x2e && !isConstructingStringLiteral { // '.'
                     strBuilder.append(char)
                     break;
                 }
@@ -251,6 +255,7 @@ class Lexer {
         while istream.peek() != 10 {
             istream.extract()
         }
+        removeTailingWhiteSpace()
     }
     
 }

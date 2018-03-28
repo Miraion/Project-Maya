@@ -60,6 +60,8 @@ func initInstructionMap() {
     instructionMap["cmp"] = (0x35, TokenExtractionFormat(.modifier, .register, .register), .binary)
     instructionMap["push"] = (0x36, TokenExtractionFormat(.modifier, .register), .unary)
     instructionMap["pop"] = (0x37, TokenExtractionFormat(.modifier, .register), .unary)
+    instructionMap["call*"] = (0x38, TokenExtractionFormat(.register), .unary)
+    instructionMap["lea"] = (0x39, TokenExtractionFormat(.modifier, .register, .register, .register), .ternay)
     
     instructionMap["jmp"] = (0x60, TokenExtractionFormat(.keyword), .unaryAddr)
     instructionMap["je"]  = (0x61, TokenExtractionFormat(.keyword), .unaryAddr)

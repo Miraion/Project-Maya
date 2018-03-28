@@ -76,10 +76,10 @@ do {
     print("Error - " + msg)
     exit(20)
 } catch AssemblerError.LexerError(let file, let line, let msg) {
-    print("Syntax error in \(file):\(line) - \(msg).")
+    print("Syntax error in \(file):\(line) - \(msg)")
     exit(21)
 } catch AssemblerError.ParserError(let file, let line, let msg) {
-    print("Syntax error in \(file):\(line) - \(msg).")
+    print("Syntax error in \(file):\(line) - \(msg)")
     exit(22)
 } catch AssemblerError.InvalidOperand(let file, let line, let actual, let expected) {
     print("Invalid operand in \(file):\(line) - Expected \(expected), found \(actual).")

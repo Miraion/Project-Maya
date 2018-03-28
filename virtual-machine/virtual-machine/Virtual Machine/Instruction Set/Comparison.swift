@@ -62,5 +62,6 @@ class Compare : BasicBinaryInstruction, ModdableInstruction, BinaryInstruction {
 class TestZero : BasicUnaryInstruction, UnaryInstruction {
     func run() {
         VPU.ZF = src.quad == 0
+        VPU.SF = Int64(bitPattern: src.quad) < 0
     }
 }

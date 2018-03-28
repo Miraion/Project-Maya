@@ -1,0 +1,93 @@
+section text
+
+global write_test:
+    push.q  ra
+    zero    r1
+    load.w  O_WRONLY, r1
+    load.w  O_TRUNC, r0
+    or.w    r0, r1, r1
+    la      filename, r0
+    zero    r2
+    call    open
+    move.l  rx, ra
+    zero    r3
+    cmp.l   rx, r3
+    js      error
+
+    la      str, r0
+    call    strlen
+    move.q  rx, r2
+
+    la      str, r1
+    move.q  ra, r0
+    call    write
+
+    cmp.l   rx, r3
+    js      error_write
+
+    pop.q   ra
+    zero    rx
+    ret
+
+
+global read_test:
+    push.q  ra
+    zero    r0
+    load.w  O_RDONLY, r0
+    move.w  r0, r1
+    la      filename, r0
+    zero    r2
+    call    open
+    move.l  rx, ra
+    zero    r3
+    cmp.l   rx, r3
+    js      error
+
+    set.b   16, r0
+    call    malloc
+    move.q  rx, rc
+
+    move.l  ra, r0
+    move.q  rc, r1
+    set.b   16, r2
+    call    read
+
+    move.q  rc, r0
+    call    puts
+
+    move.l  ra, r0
+    call    close
+
+    move.q  rc, r0
+    call    free
+
+    pop.q   ra
+    zero    rx
+    ret
+
+
+local error:
+    la      error_str, r0
+    call    puts
+    set.b   1, rx
+    pop.q   ra
+    ret
+
+local error_write:
+    la      error_write_str, r0
+    call    puts
+    move.l  ra, r0
+    call    close
+    set.b   2, rx
+    pop.q   ra
+    ret
+
+section data
+local str:
+    string "It works!!!!!\n"
+local filename:
+    string "file.txt"
+local error_str:
+    string "Error opening file.\n"
+local error_write_str:
+    string "Error writing to file.\n"

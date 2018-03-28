@@ -73,6 +73,12 @@ class Compiler {
             // Handle packages that start with an instruction.
             if package.tokens.first?.type == .instruction {
                 
+                // Instructions are only allowed in `text` sections.
+                // Throw an error if one is encountered in a different section.
+                if mode != .text {
+                    throw AssemblerError.Default(msg: "Instructions are only allowed in 'text' sections.")
+                }
+                
                 // Expand the package, retrieving the relevent instruction data from the global instruction
                 // map. It is safe to unwrap these optionals because the parser has already checked if the
                 // instruction and its operands are valid.
